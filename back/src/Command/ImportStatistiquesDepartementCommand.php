@@ -5,6 +5,7 @@ namespace App\Command;
 
 
 use App\Entity\Departement;
+use App\Entity\Region;
 use App\Entity\StatistiquesDepartement;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Command\Command;
@@ -60,17 +61,28 @@ class ImportStatistiquesDepartementCommand extends Command
 
 
            $code = $this->formatCodeDepartement($data['code_departement']);
+           $codeRegion = $this->formatCodeRegion($data['code_region']);
 
+           $region = $this->em->getRepository(Region::class)->find($codeRegion);
+           if (!$region) {
+               $region = new Region();
+               $region->setCode($codeRegion);
+               $region->setNom(trim($data['nom_region'] ?? ''));
+               $this->em->persist($region);
+               $this->em->flush();
+           }
 
            $departement = $this->em
                ->getRepository(Departement::class)
                ->find($code);
 
-
            if (!$departement) {
-               dump($data['code_departement']);exit;
-               $output->writeln("Département absent : " . $data['code_departement']);
-               continue;
+               $departement = new Departement();
+               $departement->setCode($code);
+               $departement->setNom(trim($data['nom_departement'] ?? ''));
+               $departement->setCodeRegion($region);
+               $this->em->persist($departement);
+               $this->em->flush();
            }
 
 
@@ -179,5 +191,10 @@ class ImportStatistiquesDepartementCommand extends Command
 
        // Départements métropole → padding à 2 chiffres
        return str_pad($code, 2, '0', STR_PAD_LEFT);
+   }
+
+   private function formatCodeRegion(string $code): string
+   {
+       return trim($code);
    }
 }
