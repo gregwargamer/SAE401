@@ -1,0 +1,26 @@
+cd /Applications/XAMPP/xamppfiles/htdocs/SAE401/back && php -S localhost:8000 -t public/
+
+
+Puis api sur 
+
+http://localhost:8000
+
+endpoint deja fait
+
+http://localhost:8000/api/taux_de_logements_vacants 
+retourne:
+[
+    {
+        "annee_publication": 2021,
+        "taux_de_logements_vacants": "9.000000"
+    },
+    {
+        "annee_publication": 2022,
+        "taux_de_logements_vacants": "9.050000"
+    },
+    {
+        "annee_publication": 2023,
+        "taux_de_logements_vacants": "9.020000"
+    }
+]
+
