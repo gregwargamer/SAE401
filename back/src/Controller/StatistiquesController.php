@@ -26,5 +26,26 @@ class StatistiquesController extends AbstractController
 
         return $this->json($resultats);
     }
+
+    #[Route('/api/statistiques/pauvrete_logement_social', name: 'api_statistiques_pauvrete_logement', methods: ['GET'])]
+    public function pauvreteLogementSocial(
+        StatistiquesDepartementRepository $statistiquesDepartementRepository
+    ): JsonResponse {
+        return $this->json($statistiquesDepartementRepository->findPauvreteVsLogementSocial());
+    }
+
+    #[Route('/api/statistiques/demographie_vacance', name: 'api_statistiques_demographie_vacance', methods: ['GET'])]
+    public function demographieVacance(
+        StatistiquesDepartementRepository $statistiquesDepartementRepository
+    ): JsonResponse {
+        return $this->json($statistiquesDepartementRepository->findVieillissementVsVacance());
+    }
+
+    #[Route('/api/statistiques/occupation_logements', name: 'api_statistiques_occupation', methods: ['GET'])]
+    public function occupationLogements(
+        StatistiquesDepartementRepository $statistiquesDepartementRepository
+    ): JsonResponse {
+        return $this->json($statistiquesDepartementRepository->findOccupationLogements());
+    }
 }
 
