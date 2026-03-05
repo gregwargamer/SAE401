@@ -23,4 +23,13 @@ retourne:
         "taux_de_logements_vacants": "9.020000"
     }
 ]
-
+http://localhost:8000/api/taux_de_logements_vacants/par_departement
+retourne (chaque département 3x pour avoir les 3 ans de tracking et les datas de chacunes):
+[
+    {
+        "code_departement": "01",
+        "nom_departement": "Ain",
+        "annee_publication": 2023,
+        "taux_logements_vacants": "8.00"
+    }
+]

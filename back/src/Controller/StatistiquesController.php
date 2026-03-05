@@ -17,5 +17,14 @@ class StatistiquesController extends AbstractController
 
         return $this->json($resultats);
     }
+
+    #[Route('/api/taux_de_logements_vacants/par_departement', name: 'api_taux_de_logements_vacants_par_departement', methods: ['GET'])]
+    public function tauxLogementsVacantsParDepartement(
+        StatistiquesDepartementRepository $statistiquesDepartementRepository
+    ): JsonResponse {
+        $resultats = $statistiquesDepartementRepository->findTauxLogementsVacantsParDepartement();
+
+        return $this->json($resultats);
+    }
 }
 

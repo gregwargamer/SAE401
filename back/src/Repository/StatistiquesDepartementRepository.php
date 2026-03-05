@@ -16,6 +16,23 @@ class StatistiquesDepartementRepository extends ServiceEntityRepository
         parent::__construct($registry, StatistiquesDepartement::class);
     }
 
+    public function findTauxLogementsVacantsParDepartement(): array
+    {
+        $qb = $this->createQueryBuilder('s')
+            ->select(
+                'd.code AS code_departement',
+                'd.nom AS nom_departement',
+                's.anneePublication AS annee_publication',
+                's.tauxLogementsVacants AS taux_logements_vacants'
+            )
+            ->join('s.departement', 'd')
+            ->where('s.tauxLogementsVacants IS NOT NULL')
+            ->orderBy('d.code', 'ASC')
+            ->addOrderBy('s.anneePublication', 'DESC');
+
+        return $qb->getQuery()->getArrayResult();
+    }
+
     public function findTauxLogementsVacantsOverTime(): array
     {
         $qb = $this->createQueryBuilder('s')
