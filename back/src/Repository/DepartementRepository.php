@@ -16,6 +16,15 @@ class DepartementRepository extends ServiceEntityRepository
         parent::__construct($registry, Departement::class);
     }
 
+    public function findAllDepartements(): array
+    {
+        return $this->createQueryBuilder('d')
+            ->select('d.code, d.nom')
+            ->orderBy('d.nom', 'ASC')
+            ->getQuery()
+            ->getArrayResult();
+    }
+
 //    /**
 //     * @return Departement[] Returns an array of Departement objects
 //     */
