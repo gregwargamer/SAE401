@@ -1,17 +1,23 @@
-function api() {
-    //tout dabord la base de l'url api parce que vasy
+import axios from "axios";
 
-    //ici metait vos trucs la dedans parce que ca sera surement differnet suivant vois machines 
-    const baseUrl = 'http://localhost:8000/api';
+//ptn pas mal comme dependance axios
+const apiClient = axios.create({
+    baseURL: "http://localhost:8000/api",
+    headers: { "Content-Type": "application/json" },
+});
 
-    const endpoints = {
-        //je précise que les endpooints supportent les paramètres genre departement=75&annee=2023 et ca ca marhce pour tous les endpoints
-        demographie: `${baseUrl}/statistiques/demographie`,
-        economie: `${baseUrl}/statistiques/economie`,
-        logement: `${baseUrl}/statistiques/logement`,
-        parcSocial: `${baseUrl}/statistiques/parc-social`,
-        global: `${baseUrl}/statistiques/global`,
-    };
+//call a /all
+export const getAll = async () => {
+    const response = await apiClient.get("/all");
+    return response.data;
+};
 
-    return endpoints;
-}
+// export const endpoints = {
+//     demographie: "/statistiques/demographie",
+//     economie: "/statistiques/economie",
+//     logement: "/statistiques/logement",
+//     parcSocial: "/statistiques/parc-social",
+//     global: "/statistiques/global",
+// };
+
+export default apiClient;
