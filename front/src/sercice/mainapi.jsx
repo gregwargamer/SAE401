@@ -1,15 +1,19 @@
 import axios from "axios";
 
-//ptn pas mal comme dependance axios
 const apiClient = axios.create({
     baseURL: "http://localhost:8000/api",
     headers: { "Content-Type": "application/json" },
 });
 
-//call a /all
-export const getAll = async () => {
-    const response = await apiClient.get("/all");
-    return response.data;
+const CACHE_KEY = "fulldb";
+
+const getCache = () => {
+    const cached = sessionStorage.getItem(CACHE_KEY);
+    return cached ? JSON.parse(cached) : null;
+};
+
+const sendToCache = (data) => {
+    sessionStorage.setItem(CACHE_KEY, JSON.stringify(data));
 };
 
 // export const endpoints = {
@@ -20,4 +24,4 @@ export const getAll = async () => {
 //     global: "/statistiques/global",
 // };
 
-export default apiClient;
+export { apiClient, getCache, sendToCache };

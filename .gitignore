@@ -34,3 +34,4 @@ back/config/secrets/prod/prod.decrypt.private.php
 back/migrations/*.php
 !back/migrations/.gitignore
 
+gregrun.sh
