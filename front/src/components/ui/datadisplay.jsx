@@ -1,4 +1,4 @@
-import { getByDepartement, getByRegion } from "../../sercice/regiondepartement";
+import { getByDepartement, getByRegion } from "../../service/regiondepartement";
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, LineController, Tooltip, Legend } from "chart.js";
 import { Line } from "react-chartjs-2";
 

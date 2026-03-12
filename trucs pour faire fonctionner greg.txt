@@ -1,3 +1,0 @@
-juste
-
-./rungreg.sh en fait

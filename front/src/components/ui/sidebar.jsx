@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getAll } from "../../sercice/regiondepartement";
+import { getAll } from "../../service/regiondepartement";
 
 const Sidebar = ({ selectedRegion, setSelectedRegion, setSelectedDepartement }) => {
     const [regions, setRegions] = useState([]);
