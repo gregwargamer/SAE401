@@ -1,22 +1,48 @@
-import { Sidebar } from './components/ui/sidebar'
-import { DataDisplay } from './components/ui/datadisplay'
-import { useState, useEffect } from 'react'
-import './App.css'
+import { NavLink, Navigate, Route, Routes } from 'react-router-dom';
+import HomePage from './pages/HomePage';
+import LegacyPage from './pages/LegacyPage';
+import LogementPage from './pages/LogementPage';
+import ParcSocialPage from './pages/ParcSocialPage';
+import PopulationPage from './pages/PopulationPage';
+import './App.css';
 
 function App() {
-  useEffect(() => {  //il a pas l'aire de vider, les logs de symfony metttent un truc quand je ctrl shift r mais pas quand je ferme et rouvre, peut etre quesiton de navigateur?
-    const clearOnQuit = () => { localStorage.clear(); sessionStorage.clear(); };
-    window.addEventListener('beforeunload', clearOnQuit);
-    return () => window.removeEventListener('beforeunload', clearOnQuit);
-  }, []);
-  const [selectedRegion, setSelectedRegion] = useState(null);
-  const [selectedDepartement, setSelectedDepartement] = useState(null);
   return (
-    <>
-      <Sidebar selectedRegion={selectedRegion} setSelectedRegion={setSelectedRegion} selectedDepartement={selectedDepartement} setSelectedDepartement={setSelectedDepartement} />
-      <DataDisplay selectedRegion={selectedRegion} selectedDepartement={selectedDepartement} />
-    </>
-  )
+    <div className="app-shell">
+      <header className="topbar">
+        <div className="brand">DATAVIZ BETA</div>
+        <nav className="main-nav" aria-label="Navigation principale">
+          <NavLink to="/" end className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
+            Accueil
+          </NavLink>
+          <NavLink to="/parc-social" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
+            Parc social
+          </NavLink>
+          <NavLink to="/logement" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
+            Stat logement
+          </NavLink>
+          <NavLink to="/population" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
+            Population
+          </NavLink>
+          <NavLink to="/habitants" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
+            habitants
+          </NavLink>
+        </nav>
+      </header>
+
+      <main className="content">
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/parc-social" element={<ParcSocialPage />} />
+          <Route path="/logement" element={<LogementPage />} />
+          <Route path="/population" element={<PopulationPage />} />
+          <Route path="/habitants" element={<LegacyPage />} />
+          <Route path="/ancienne-vue" element={<LegacyPage />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </main>
+    </div>
+  );
 }
 
-export default App
+export default App;
