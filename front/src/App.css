@@ -1,6 +1,7 @@
 .app-shell {
   min-height: 100vh;
   background: linear-gradient(120deg, #f7f7f4, #ecece4);
+  overflow-x: hidden;
 }
 
 .topbar {

@@ -44,4 +44,5 @@ class AllController extends AbstractController
         $data = $connection->fetchAllAssociative($sql);
         return $this->json($data);
     }
+
 }

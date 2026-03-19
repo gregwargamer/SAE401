@@ -1,73 +1,55 @@
-﻿import { useState } from "react";
-import useChart from "../hooks/useChart";
-
-const SRU = 25;
+﻿import { useEffect, useMemo, useState } from "react";
+import { apiClient } from "../service/mainapi";
+import MapDepartements from "../components/MapDepartements";
 
 const HomePage = () => {
-  const [ordre, setOrdre] = useState("desc");
+  // pour stocker les données 
+  const [data, setData] = useState([]);
 
-  const canvasRef = useChart((data) => {
-    const anneeMax = Math.max(...data.map((item) => Number(item.annee)));
+  useEffect(() => {
+    // 1. On lance le téléchargement
+    const load = async () => {
+      // on dmd les coo all et geo 
+      const [geo, stats] = await Promise.all([apiClient.get("/geo"), apiClient.get("/all")]);
+      
+      // l'anné la plus recente poru etre a jour 
+      const statsList = stats.data || [];
+      const anneeMax = Math.max(...statsList.map(s => Number(s.annee)).filter(n => !isNaN(n)));
+      const statsAjour = statsList.filter(s => Number(s.annee) === anneeMax);
 
-    const lignes = data.filter(
-      (item) => Number(item.annee) === anneeMax && item.taux_logements_sociaux != null,
-    );
-
-    const departements = lignes.map((item) => ({
-      nom: item.nom_departement,
-      val: Number(item.taux_logements_sociaux),
-    }));
-
-    departements.sort((a, b) => {
-      if (ordre === "desc") return b.val - a.val;
-      return a.val - b.val;
-    });
-
-    const top20 = departements.slice(0, 20);
-
-    return {
-      type: "bar",
-      data: {
-        labels: top20.map((d) => d.nom),
-        datasets: [{
-          label: "Taux de logements sociaux (%)",
-          data: top20.map((d) => d.val),
-          backgroundColor: top20.map((d) => d.val >= SRU ? "#16a34a" : "#c1ff06"),
-        }],
-      },
-      options: {
-        indexAxis: "y",
-        responsive: true,
-        plugins: {
-          legend: { display: false },
-          title: { display: true, text: `Top 20 departements - Taux de logements sociaux (${anneeMax})` },
-          tooltip: {
-            callbacks: {
-              label: (ctx) => `${ctx.raw}% - ${ctx.raw >= SRU ? "Seuil SRU atteint" : "Sous le seuil SRU (25%)"}`,
-            },
-          },
-        },
-        scales: { x: { title: { display: true, text: "%" }, max: 50 } },
-      },
+      // ici c pour coller les chiffre sur le geo et sauvegarder
+      setData((geo.data || []).map(g => {
+        const sesChiffres = statsAjour.find(s => s.code_departement === g.code) || {};
+        return { ...g, ...sesChiffres, nom: g.nom, code: g.code };
+      }));
     };
-  }, [ordre]);
+    load();
+  }, []);
+
+  // 2. tranformer en format gson pour que ca soir lisible pour fairela carte
+  const mapData = useMemo(() => {
+    return data.map(d => {
+      let geometry;
+      try { geometry = typeof d.geom === "string" ? JSON.parse(d.geom) : d.geom; } catch(e) { return null; }
+      if (!geometry) return null;
+
+      // stucturation des données
+      return {
+        type: "Feature",
+        geometry: geometry.type === "Feature" ? geometry.geometry : geometry,
+        properties: { nom: d.nom, code: d.code, taux_logements_sociaux: d.taux_logements_sociaux, taux_chomage: d.taux_chomage, taux_pauvrete: d.taux_pauvrete }
+      };
+    }).filter(v => v !== null); // On retire les erreurs
+  }, [data]);
 
   return (
-    <section className="page">
-      <h1>Accueil</h1>
-      <div className="mb-3 flex flex-wrap items-center gap-4">
-        <p className="m-0 text-slate-600">
-          <span className="font-bold text-green-600">■</span>{" ≥ 25% (seuil SRU atteint) "}
-          <span className="font-bold text-yellow-700">■</span>{" < 25% (sous le seuil légal)"}
-        </p>
-        <button
-          onClick={() => setOrdre(ordre === "desc" ? "asc" : "desc")}
-          className="cursor-pointer rounded-full border border-slate-300 bg-stone-100 px-4 py-1.5 font-semibold transition hover:bg-stone-200"
-        >
-          {ordre === "desc" ? "↓ Décroissant" : "↑ Croissant"}
-        </button>
+    <section className="p-2 lg:p-0">
+      <div className="flex items-start">
+        <div className="w-full max-w-[750px] border border-stone-200 rounded-xl overflow-hidden h-[80vh] min-h-[450px]">
+          {/* affichage de la carte juste ici*/}
+          <MapDepartements features={mapData} />
+        </div>
       </div>
-      <canvas ref={canvasRef} className="max-w-full" />
     </section>
   );
 };
