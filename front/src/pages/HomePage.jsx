@@ -43,14 +43,19 @@ const HomePage = () => {
   }, [data]);
 
   return (
-    <section className="p-2 lg:p-0">
-      <div className="flex items-start">
-        <div className="w-full max-w-[750px] border border-stone-200 rounded-xl overflow-hidden h-[80vh] min-h-[450px]">
-          {/* affichage de la carte juste ici*/}
-          <MapDepartements features={mapData} />
-        </div>
+    <>
+      <div className="text-md mb-4 bg-gray-200 text-black p-3 max-w-[750px] border rounded-md">
+        Concevez vos propre graphique et croisé les données officiel que vous souhaitez !  
       </div>
-    </section>
+      <section className="p-2 lg:p-0">
+        <div className="flex items-start">
+          <div className="w-full max-w-[750px] border border-stone-200 rounded-xl overflow-hidden h-[80vh] min-h-[450px]">
+            {/* affichage de la carte juste ici*/}
+            <MapDepartements features={mapData} />
+          </div>
+        </div>
+      </section>
+    </>
   );
 };
 
