@@ -16,7 +16,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#f7f7f4] to-[#ecece4] overflow-x-hidden text-[#1f2a2e]">
-      <header className="flex items-center justify-between px-8 pt-4 pb-2">
+      <header className="flex items-center justify-between px-8 pt-3 pb-2">
         <div className="text-2xl font-extrabold tracking-widest text-[#1f2a2e]">
           DATAVIZ
         </div>
