@@ -3,6 +3,7 @@ import HomePage from './pages/HomePage';
 import LogementPage from './pages/LogementPage';
 import ParcSocialPage from './pages/ParcSocialPage';
 import PopulationPage from './pages/PopulationPage';
+import TestPage from './pages/TestPage';
 
 function App() {
   // Classe Tailwind réutilisable pour les liens de la navbar :
@@ -16,11 +17,8 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#f7f7f4] to-[#ecece4] overflow-x-hidden text-[#1f2a2e]">
-      <header className="flex items-center justify-between px-8 pt-3 pb-2">
-        <div className="text-2xl font-extrabold tracking-widest text-[#1f2a2e]">
-          DATAVIZ
-        </div>
-        <nav className="flex gap-6 flex-wrap justify-end" aria-label="Navigation principale">
+      <header className="flex items-center justify-end px-8 pt-6 pb-3 relative z-10 pointer-events-none">
+        <nav className="flex gap-6 flex-wrap justify-end pointer-events-auto" aria-label="Navigation principale">
           <NavLink to="/" end className={lienNav}>
             Accueil
           </NavLink>
@@ -33,13 +31,17 @@ function App() {
           <NavLink to="/population" className={lienNav}>
             Population
           </NavLink>
+          <NavLink to="/test" className={lienNav}>
+            Test (Brouillon)
+          </NavLink>
         </nav>
       </header>
 
       {/* CONTENU PRINCIPAL */}
-      <main className="px-8 pb-8 pt-4">
+      <main className="flex-1 w-full h-full pb-8">
         <Routes>
           <Route path="/" element={<HomePage />} />
+          <Route path="/test" element={<TestPage />} />
           <Route path="/parc-social" element={<ParcSocialPage />} />
           <Route path="/logement" element={<LogementPage />} />
           <Route path="/population" element={<PopulationPage />} />

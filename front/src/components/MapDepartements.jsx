@@ -64,13 +64,14 @@ const MapDepartements = ({ features }) => {
       {/* Titre */}
       <div className="absolute top-3 left-3 px-1 py-1 text-md font-semibold text-slate-700">
         Taux de logements sociaux - France métropolitaine (2022)
+        <div className="text-xs font-normal text-slate-500">Répartition de l'offre sociale sur le territoire national.</div>
       </div>
 
       {/* 2. INFOBULLE du hoverr (apparait seulement au survol avec la souris) */}
       {survol && (
         <div 
           className="absolute z-20 pointer-events-none bg-white border border-slate-300 rounded-lg p-2 text-xs shadow-lg"
-          style={{ left: Math.min(souris.x + 12, 560), top: Math.max(souris.y - 20, 8) }}
+          style={{ left: souris.x + 15, top: Math.max(souris.y - 20, 8) }}
         >
           <div className="font-bold mb-1">
             {survol.nom} {survol.code ? `(${survol.code})` : ""}
