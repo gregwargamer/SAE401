@@ -1,6 +1,11 @@
 import React from 'react';
 
-const SidebarPopulation = ({ showDomNatMig, setShowDomNatMig, sansGers, setSansGers }) => {
+const SidebarPopulation = ({ 
+  sansGers, setSansGers,
+  sortJeunes, setSortJeunes,
+  sortPauvrete, setSortPauvrete,
+  selectedRadarDept, setSelectedRadarDept, depsList 
+}) => {
   return (
     <aside className="fixed top-0 left-0 w-[240px] lg:w-[22%] h-screen bg-transparent text-[#374151] border-r border-[#e5e7eb] p-5 overflow-y-auto z-20 flex flex-col">
       <h2 className="text-lg font-extrabold tracking-widest text-[#111827] mb-5 border-b border-[#d1d5db] pb-2.5 uppercase">
@@ -12,49 +17,91 @@ const SidebarPopulation = ({ showDomNatMig, setShowDomNatMig, sansGers, setSansG
         {/* ROW 1 */}
         <div>
           <h3 className="text-[15px] font-bold text-slate-800 mb-1.5 leading-snug">Chômage, Pauvreté et Parc Social</h3>
-          <button
-            onClick={() => setSansGers(!sansGers)}
-            className={`w-full text-left px-2.5 py-1.5 text-[13px] font-medium border border-slate-300 rounded transition-colors ${
-              sansGers 
-                ? 'bg-black text-white border-black' 
-                : 'text-black bg-slate-50'
-            }`}
-          >
-            Sans le Gers
-          </button>
-        </div>
-
-        {/* ROW 2 */}
-        <div>
-          <h3 className="text-[15px] font-bold text-slate-800 mb-1.5 leading-snug">Solde naturel vs Solde migratoire</h3>
-          <button
-            onClick={() => setShowDomNatMig(!showDomNatMig)}
-            className={`w-full text-left px-2.5 py-1.5 text-[13px] font-medium border border-slate-300 rounded transition-colors ${
-              showDomNatMig 
-                ? 'bg-black text-white border-black' 
-                : 'text-black bg-slate-50'
-            }`}
-          >
-            Activer DOM
-          </button>
+          <div className="flex flex-col gap-2">
+            <button
+              onClick={() => setSansGers(!sansGers)}
+              className={`w-full text-left px-3 py-1.5 text-xs font-medium border border-slate-300 rounded-md transition-colors ${
+                sansGers 
+                  ? 'bg-[#1f2a2e] text-white border-[#1f2a2e]' 
+                  : 'text-slate-600 bg-white hover:bg-slate-50'
+              }`}
+            >
+              {sansGers ? 'Inclure le Gers (Valeur extrême)' : 'Retirer le Gers'}
+            </button>
+          </div>
         </div>
 
         {/* ROW 3 */}
-        <div>
-          <h3 className="text-[15px] font-bold text-slate-800 mb-0.5 leading-snug">Pauvreté × Variation de population</h3>
-          <p className="text-xs text-slate-400 italic">Aucun filtre disponible</p>
+        <div className="mt-2">
+          <h3 className="text-[15px] font-bold text-slate-800 mb-0.5 leading-snug">Pauvreté et Densité</h3>
+          <p className="text-xs text-slate-400 italic mb-1.5">Prend le Top 30 des pauvres</p>
+          <div className="flex flex-col gap-2">
+            <button
+              onClick={() => setSortPauvrete && setSortPauvrete('asc')}
+              className={`w-full text-left px-3 py-1.5 text-xs font-medium border border-slate-300 rounded-md transition-colors ${
+                sortPauvrete === 'asc' 
+                  ? 'bg-[#1f2a2e] text-white border-[#1f2a2e]' 
+                  : 'text-slate-600 bg-white hover:bg-slate-50'
+              }`}
+            >
+              Croissant (Du moins au plus pauvre)
+            </button>
+            <button
+              onClick={() => setSortPauvrete && setSortPauvrete('desc')}
+              className={`w-full text-left px-3 py-1.5 text-xs font-medium border border-slate-300 rounded-md transition-colors ${
+                sortPauvrete === 'desc' 
+                  ? 'bg-[#1f2a2e] text-white border-[#1f2a2e]' 
+                  : 'text-slate-600 bg-white hover:bg-slate-50'
+              }`}
+            >
+              Décroissant (Du plus au moins pauvre)
+            </button>
+          </div>
         </div>
 
         {/* ROW 4 - GAUCHE */}
-        <div>
-          <h3 className="text-[15px] font-bold text-slate-800 mb-0.5 leading-snug">Répartition : Jeunes vs Seniors</h3>
-          <p className="text-xs text-slate-400 italic">Aucun filtre disponible</p>
+        <div className="mt-2">
+          <h3 className="text-[15px] font-bold text-slate-800 mb-1.5 leading-snug">Répartition : Jeunes vs Seniors</h3>
+          <div className="flex flex-col gap-2">
+            <button
+              onClick={() => setSortJeunes && setSortJeunes('asc')}
+              className={`w-full text-left px-3 py-1.5 text-xs font-medium border border-slate-300 rounded-md transition-colors ${
+                sortJeunes === 'asc' 
+                  ? 'bg-[#1f2a2e] text-white border-[#1f2a2e]' 
+                  : 'text-slate-600 bg-white hover:bg-slate-50'
+              }`}
+            >
+              Croissant (Plus vieux en premier)
+            </button>
+            <button
+              onClick={() => setSortJeunes && setSortJeunes('desc')}
+              className={`w-full text-left px-3 py-1.5 text-xs font-medium border border-slate-300 rounded-md transition-colors ${
+                sortJeunes === 'desc' 
+                  ? 'bg-[#1f2a2e] text-white border-[#1f2a2e]' 
+                  : 'text-slate-600 bg-white hover:bg-slate-50'
+              }`}
+            >
+              Décroissant (Plus jeunes en premier)
+            </button>
+          </div>
         </div>
 
         {/* ROW 4 - DROITE */}
-        <div>
-          <h3 className="text-[15px] font-bold text-slate-800 mb-0.5 leading-snug">Croissance et Chômage</h3>
-          <p className="text-xs text-slate-400 italic">Aucun filtre disponible</p>
+        <div className="mt-2 text-left">
+          <h3 className="text-[15px] font-bold text-slate-800 mb-1.5 leading-snug">Profil départemental</h3>
+          {depsList && depsList.length > 0 ? (
+            <select
+              value={selectedRadarDept || '01'}
+              onChange={(e) => setSelectedRadarDept && setSelectedRadarDept(e.target.value)}
+              className="w-full text-left px-3 py-1.5 text-xs font-medium border border-slate-300 rounded-md bg-white text-slate-600 focus:ring-[#1f2a2e] focus:border-[#1f2a2e]"
+            >
+              {depsList.map((d, i) => (
+                <option key={`opt-${d.code}-${i}`} value={d.code}>{d.nom} ({d.code})</option>
+              ))}
+            </select>
+          ) : (
+            <p className="text-xs text-slate-400 italic">Chargement des départements...</p>
+          )}
         </div>
 
       </div>

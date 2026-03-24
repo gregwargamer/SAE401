@@ -12,6 +12,8 @@ ChartJS.register(CategoryScale, LinearScale, LogarithmicScale, BarElement, Point
 const LogementPage = () => {
   const [rawData, setRawData] = useState([]);
   const [geoData, setGeoData] = useState([]);
+  const [sortIndividuel, setSortIndividuel] = useState('asc');
+  const [showDOM, setShowDOM] = useState(true);
 
   useEffect(() => {
     const load = async () => {
@@ -56,14 +58,18 @@ const LogementPage = () => {
 
   // 2. SCATTER 1 : Densité × Taux de logements sociaux
   const scatter1Data = useMemo(() => {
-    const points = latestData
-      .filter(d => !isNaN(Number(d.densite)) && !isNaN(Number(d.taux_logements_sociaux)))
-      .map(d => ({
-        x: Number(d.densite),
-        y: Number(d.taux_logements_sociaux),
-        code: d.code,
-        nom: d.nom
-      }));
+    let filtered = latestData.filter(d => !isNaN(Number(d.densite)) && !isNaN(Number(d.taux_logements_sociaux)));
+
+    if (!showDOM) {
+      filtered = filtered.filter(d => !String(d.code).startsWith("97"));
+    }
+
+    const points = filtered.map(d => ({
+      x: Number(d.densite),
+      y: Number(d.taux_logements_sociaux),
+      code: d.code,
+      nom: d.nom
+    }));
 
     return {
       datasets: [{
@@ -74,7 +80,7 @@ const LogementPage = () => {
         pointHoverRadius: 7
       }]
     };
-  }, [latestData]);
+  }, [latestData, showDOM]);
 
   const scatter1Options = {
     maintainAspectRatio: false,
@@ -99,47 +105,39 @@ const LogementPage = () => {
   };
 
 
-  // 3. BAR EMPILÉ : Individuels vs Collectifs par Région
+  // 3. BAR EMPILÉ : Individuels vs Collectifs par Département
   const barData = useMemo(() => {
-    // Grouper par région
-    const grouped = {};
-    latestData.forEach(d => {
-      let r = d.nom_region;
-      if (!r) return;
-      if (!grouped[r]) grouped[r] = { individuels: [], cnt: 0 };
-      if (!isNaN(Number(d.taux_logements_individuels))) {
-        grouped[r].individuels.push(Number(d.taux_logements_individuels));
-        grouped[r].cnt++;
-      }
-    });
+    let depsData = latestData
+      .filter(d => !isNaN(Number(d.taux_logements_individuels)))
+      .map(d => ({
+        nom: d.nom,
+        individuel: Number(d.taux_logements_individuels)
+      }));
 
-    const regions = Object.keys(grouped).slice(0, 12); // Limiter à 10-12 régions pour la lisibilité
-    regions.sort(); // Tri alphabétique ou par valeur moyenne
+    if (sortIndividuel === 'asc') {
+      depsData.sort((a,b) => a.individuel - b.individuel);
+    } else {
+      depsData.sort((a,b) => b.individuel - a.individuel);
+    }
 
-    const individuelsAvg = regions.map(r => {
-      const g = grouped[r];
-      return g.cnt > 0 ? g.individuels.reduce((a, b) => a + b, 0) / g.cnt : 0;
-    });
-    
-    // Le reste c'est du collectif (100 - pct_individuel)
-    const collectifsAvg = individuelsAvg.map(val => 100 - val);
+    const sliced = depsData.slice(0, 15); // Limiter à 20 départements pour la lisibilité
 
     return {
-      labels: regions.map(r => r.substring(0, 10) + (r.length > 10 ? '.' : '')),
+      labels: sliced.map(d => d.nom.substring(0, 12) + (d.nom.length > 12 ? '.' : '')),
       datasets: [
         {
           label: 'Individuel (%)',
-          data: individuelsAvg,
+          data: sliced.map(d => d.individuel),
           backgroundColor: '#38bdf8', // Blue-400
         },
         {
           label: 'Collectif (%)',
-          data: collectifsAvg,
+          data: sliced.map(d => 100 - d.individuel),
           backgroundColor: '#1d4ed8', // Blue-800
         }
       ]
     };
-  }, [latestData]);
+  }, [latestData, sortIndividuel]);
 
   const barOptions = {
     maintainAspectRatio: false,
@@ -231,7 +229,12 @@ const LogementPage = () => {
 
   return (
     <div className="flex w-full items-start bg-transparent min-h-screen">
-      <SidebarLogement />
+      <SidebarLogement 
+        sortIndividuel={sortIndividuel} 
+        setSortIndividuel={setSortIndividuel} 
+        showDOM={showDOM}
+        setShowDOM={setShowDOM}
+      />
 
       <div className="flex-1 ml-[240px] lg:ml-[22%] flex flex-col gap-8 p-6 lg:p-8 lg:pt-0">
         
@@ -254,7 +257,7 @@ const LogementPage = () => {
           
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex flex-col">
             <h3 className="text-md font-bold text-slate-800 mb-1 leading-snug">Logements individuels vs collectifs</h3>
-            <p className="text-xs text-slate-500 mb-4 line-clamp-1">Structure du parc par région, opposant l'habitat pavillonnaire et les grands ensembles.</p>
+            <p className="text-xs text-slate-500 mb-4 line-clamp-1">Structure du parc par département, opposant l'habitat pavillonnaire et les grands ensembles.</p>
             <div className="h-[280px] w-full mt-auto">
               <Bar data={barData} options={barOptions} />
             </div>

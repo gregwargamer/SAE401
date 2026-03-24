@@ -20,7 +20,8 @@ const ParcSocialPage = () => {
   const [geoData, setGeoData] = useState([]);
   const [hoveredDep, setHoveredDep] = useState(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  const [sansGers, setSansGers] = useState(false);
+  const [selectedRegion, setSelectedRegion] = useState("Toutes");
+  const [sortFluxOrder, setSortFluxOrder] = useState('asc'); // 'asc' = croissant par défaut
 
   useEffect(() => {
     const load = async () => {
@@ -40,18 +41,56 @@ const ParcSocialPage = () => {
     return rawData.filter(s => Number(s.annee) === anneeMax).map(d => ({...d, nom: d.nom_departement || d.nom, code: d.code_departement || d.code}));
   }, [rawData]);
 
-  const latestDataMetropole = useMemo(() => latestDataAll.filter(d => isMetropole(d.code) && (!sansGers || String(d.code) !== "32")), [latestDataAll, sansGers]);
+  const latestDataMetropole = useMemo(() => latestDataAll.filter(d => isMetropole(d.code)), [latestDataAll]);
+
+  const regionsList = useMemo(() => {
+    const list = new Set();
+    latestDataAll.forEach(d => {
+      if (d.nom_region) list.add(d.nom_region);
+    });
+    return Array.from(list).sort();
+  }, [latestDataAll]);
 
   const mapData = useMemo(() => {
     if (!latestDataAll.length || !geoData.length) return [];
     
+    let minAge = Infinity, maxAge = -Infinity;
+    let minEne = Infinity, maxEne = -Infinity;
+    let minVac = Infinity, maxVac = -Infinity;
+
+    latestDataMetropole.forEach(d => {
+      const a = Number(d.age_moyen_parc);
+      const e = Number(d.taux_energivores);
+      const v = Number(d.parc_social_taux_vacants);
+      if(!isNaN(a)) { if(a < minAge) minAge = a; if(a > maxAge) maxAge = a; }
+      if(!isNaN(e)) { if(e < minEne) minEne = e; if(e > maxEne) maxEne = e; }
+      if(!isNaN(v)) { if(v < minVac) minVac = v; if(v > maxVac) maxVac = v; }
+    });
+
+    if (minAge === Infinity) { minAge = 0; maxAge = 1; }
+    if (minEne === Infinity) { minEne = 0; maxEne = 1; }
+    if (minVac === Infinity) { minVac = 0; maxVac = 1; }
+
     // We only take Metropole for the map to keep zoom focused, sans Corse
-    const topoFeatures = geoData.filter(g => isMetropole(g.code) && g.code !== "2A" && g.code !== "2B" && (!sansGers || String(g.code) !== "32")).map(g => {
+    const topoFeatures = geoData.filter(g => isMetropole(g.code) && g.code !== "2A" && g.code !== "2B").map(g => {
       let parsed = null;
       try { parsed = JSON.parse(g.geom); } catch(e){}
       
       const stat = latestDataAll.find(s => s.code === g.code);
       
+      let score = null;
+      if (stat) {
+        const age = Number(stat.age_moyen_parc);
+        const ene = Number(stat.taux_energivores);
+        const vac = Number(stat.parc_social_taux_vacants);
+        if (!isNaN(age) && !isNaN(ene) && !isNaN(vac)) {
+          const normAge = (age - minAge) / (maxAge - minAge || 1);
+          const normEne = (ene - minEne) / (maxEne - minEne || 1);
+          const normVac = (vac - minVac) / (maxVac - minVac || 1);
+          score = ((normAge + normEne + normVac) / 3) * 100;
+        }
+      }
+
       return {
         type: "Feature",
         properties: { 
@@ -60,7 +99,8 @@ const ParcSocialPage = () => {
           loyer: stat ? Number(stat.loyer_moyen) : null,
           age: stat ? Number(stat.age_moyen_parc) : null,
           energivores: stat ? Number(stat.taux_energivores) : null,
-          vacance: stat ? Number(stat.parc_social_taux_vacants) : null
+          vacance: stat ? Number(stat.parc_social_taux_vacants) : null,
+          score
         },
         geometry: parsed
       };
@@ -70,28 +110,30 @@ const ParcSocialPage = () => {
       type: "FeatureCollection",
       features: topoFeatures
     };
-  }, [latestDataAll, geoData, sansGers]);
+  }, [latestDataAll, geoData, latestDataMetropole]);
 
-  const getEnergiColor = (energie) => {
-    if (energie === null || isNaN(energie)) return "#e2e8f0";
-    if (energie >= 20) return "#9f1239"; // rose sombre (+20%)
-    if (energie >= 15) return "#dc2626"; // red
-    if (energie >= 10) return "#f59e0b"; // orange
-    if (energie >= 5) return "#facc15"; // jaune
-    return "#86efac"; // vert clair (très peu)
+  const getScoreColor = (score) => {
+    if (score === null || isNaN(score)) return "#e2e8f0";
+    if (score >= 65) return "#9f1239"; // rose sombre (Urgence)
+    if (score >= 50) return "#dc2626"; // red
+    if (score >= 35) return "#f59e0b"; // orange
+    if (score >= 20) return "#facc15"; // jaune
+    return "#86efac"; // vert clair (Bon état)
   };
 
   const handleMouseMove = (e) => {
     setMousePos({ x: e.clientX, y: e.clientY });
   };
 
-  // 01 Scatter: Énergivores x Loyer moyen
-  const energiesLoyerData = useMemo(() => {
-    const points = latestDataMetropole.filter(d => !isNaN(Number(d.taux_energivores)) && !isNaN(Number(d.loyer_moyen))).map(d => ({
-      x: Number(d.taux_energivores),
-      y: Number(d.loyer_moyen),
+  // 01 Scatter: Prix vs Qualité (Loyer x Energivores)
+  const prixQualiteData = useMemo(() => {
+    // On veut le loyer_moyen sur l'axe X, et le taux_energivores sur l'axe Y
+    const points = latestDataMetropole.filter(d => !isNaN(Number(d.loyer_moyen)) && !isNaN(Number(d.taux_energivores))).map(d => ({
+      x: Number(d.loyer_moyen),
+      y: Number(d.taux_energivores),
       nom: d.nom
     }));
+
     return {
       datasets: [{
         label: 'Départements (Métropole)',
@@ -105,43 +147,103 @@ const ParcSocialPage = () => {
 
   // 06 Flux : Entrées vs Sorties
   const fluxData = useMemo(() => {
-    const sorted = [...latestDataMetropole].sort((a,b) => Number(b.logements_mis_en_location) - Number(a.logements_mis_en_location)).slice(0, 15);
+    let filtered = [...latestDataMetropole];
+    if (selectedRegion !== "Toutes") {
+      filtered = filtered.filter(d => d.nom_region === selectedRegion);
+    }
+
+    const calculated = filtered.map(d => {
+      const inLocation = Number(d.logements_mis_en_location) || 0;
+      const soldes = (Number(d.logements_demolis) || 0) + (Number(d.ventes_personnes_physiques) || 0);
+      return {
+        ...d,
+        inLocation,
+        demo: Number(d.logements_demolis) || 0,
+        ventes: Number(d.ventes_personnes_physiques) || 0,
+        soldeNet: inLocation - soldes
+      };
+    });
+
+    // Tri Intelligent : du plus gros solde net au plus petit ou inversement
+    if (sortFluxOrder === 'desc') {
+      calculated.sort((a,b) => b.soldeNet - a.soldeNet);
+    } else {
+      calculated.sort((a,b) => a.soldeNet - b.soldeNet);
+    }
+
+    const sorted = calculated.slice(0, 15);
+
     return {
       labels: sorted.map(d => d.nom.substring(0,10)+(d.nom.length>10?".":"")),
       datasets: [
         {
+          type: 'line',
+          label: 'Solde Net',
+          data: sorted.map(d => d.soldeNet),
+          borderColor: '#eab308', // Jaune fort contrasté
+          backgroundColor: '#ca8a04',
+          borderWidth: 3,
+          pointRadius: 4,
+          pointBackgroundColor: sorted.map(d => d.soldeNet >= 0 ? '#eab308' : '#dc2626'), // Rouge si négatif
+          fill: false,
+          zIndex: 10
+        },
+        {
+          type: 'bar',
           label: 'Mises en location (+)',
-          data: sorted.map(d => Number(d.logements_mis_en_location)),
+          data: sorted.map(d => d.inLocation),
           backgroundColor: '#10b981', // green
+          stack: 'bars'
         },
         {
+          type: 'bar',
           label: 'Démolitions (-)',
-          data: sorted.map(d => -Number(d.logements_demolis)),
+          data: sorted.map(d => -d.demo),
           backgroundColor: '#f43f5e', // rose
+          stack: 'bars'
         },
         {
+          type: 'bar',
           label: 'Ventes physiques (-)',
-          data: sorted.map(d => -Number(d.ventes_personnes_physiques)),
+          data: sorted.map(d => -d.ventes),
           backgroundColor: '#8b5cf6', // purple
+          stack: 'bars'
         }
       ]
     };
-  }, [latestDataMetropole]);
+  }, [latestDataMetropole, selectedRegion, sortFluxOrder]);
 
-  // 05 Scatter: Age x Vacance
-  const scatterAgeVacanceData = useMemo(() => {
-    const points = latestDataMetropole.filter(d => !isNaN(Number(d.age_moyen_parc)) && !isNaN(Number(d.parc_social_taux_vacants))).map(d => ({
-      x: Number(d.age_moyen_parc),
-      y: Number(d.parc_social_taux_vacants),
-      nom: d.nom
-    }));
+  // Nouveau Scatter : Attractivité vs Coût
+  const attractiviteCoutData = useMemo(() => {
+    const valid = latestDataMetropole.filter(d => 
+      !isNaN(Number(d.loyer_moyen)) && 
+      !isNaN(Number(d.logements_mis_en_location)) &&
+      !isNaN(Number(d.nb_logements))
+    );
+
+    const maxNb = Math.max(...valid.map(d => Number(d.nb_logements)), 1);
+
+    const points = valid.map(d => {
+      const nb = Number(d.nb_logements);
+      const radius = 4 + (nb / maxNb) * 20; // Rayon dynamique (bulles) entre 4px et 24px
+      return {
+        x: Number(d.loyer_moyen),
+        y: Number(d.logements_mis_en_location),
+        r: radius,
+        nom: d.nom,
+        nb_logements: nb
+      };
+    });
+
     return {
       datasets: [{
-        label: 'Départements (Métropole)',
+        label: 'Départements',
         data: points,
-        backgroundColor: '#3b82f6',
-        pointRadius: 4,
-        pointHoverRadius: 7
+        backgroundColor: 'rgba(99, 102, 241, 0.6)', // Indigo transparent
+        borderColor: '#4f46e5',
+        borderWidth: 1,
+        pointRadius: points.map(p => p.r),
+        pointHoverRadius: points.map(p => p.r + 2)
       }]
     };
   }, [latestDataMetropole]);
@@ -162,6 +264,12 @@ const ParcSocialPage = () => {
     const regions = Object.keys(grouped).sort((a,b) => (grouped[b].sum/grouped[b].cnt) - (grouped[a].sum/grouped[a].cnt));
     const vals = regions.map(r => grouped[r].sum / grouped[r].cnt);
     
+    const colors = [
+      '#f87171', '#fb923c', '#fbbf24', '#a3e635', '#4ade80', '#34d399',
+      '#2dd4bf', '#38bdf8', '#60a5fa', '#818cf8', '#a78bfa', '#c084fc',
+      '#e879f9', '#f472b6', '#fb7185', '#94a3b8'
+    ];
+
     return {
       labels: regions.map(r => r.substring(0,18)),
       datasets: [
@@ -178,7 +286,8 @@ const ParcSocialPage = () => {
           type: 'bar',
           label: 'Loyer moyen (€/m²)',
           data: vals,
-          backgroundColor: '#38bdf8',
+          backgroundColor: regions.map((_, i) => colors[i % colors.length]),
+          borderRadius: 4
         }
       ]
     };
@@ -186,28 +295,33 @@ const ParcSocialPage = () => {
 
   return (
     <div className="flex w-full items-start bg-transparent min-h-screen">
-      <SidebarParcSocial sansGers={sansGers} setSansGers={setSansGers} />
-      <div className="flex-1 ml-[240px] lg:ml-[22%] flex flex-col gap-8 p-6 lg:p-8">
-        
+      <SidebarParcSocial 
+        regions={regionsList} 
+        selectedRegion={selectedRegion} 
+        setSelectedRegion={setSelectedRegion} 
+        sortFluxOrder={sortFluxOrder}
+        setSortFluxOrder={setSortFluxOrder}
+      />
+      <div className="flex-1 ml-[240px] lg:ml-[22%] flex flex-col gap-8 p-6 lg:p-8 lg:pt-0">
         {/* ROW 1 : CHOROPLETH MAP */}
         <div className="w-full bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden relative" onMouseMove={handleMouseMove}>
           <div className="absolute top-3 left-3 z-10">
-            <h2 className="text-lg font-bold text-slate-800 leading-tight">Cartographie des Passoires Thermiques</h2>
-            <div className="text-xs font-normal text-slate-500 mt-0.5">Part des logements très énergivores (F & G) par département (Hors Corse)</div>
+            <h2 className="text-lg font-bold text-slate-800 leading-tight">Où rénover en urgence ? (Score de Vétusté)</h2>
+            <div className="text-xs font-normal text-slate-500 mt-0.5">Le score combine âge moyen, passoires thermiques et taux de vacance.</div>
             <div className="mt-3 flex items-center gap-2">
-              <div className="text-xs font-semibold text-slate-600">&lt; 5 %</div>
+              <div className="text-xs font-semibold text-slate-600">Bon état</div>
               <div className="flex h-3 w-40 rounded-full bg-gradient-to-r from-[#86efac] via-[#facc15] via-[#f59e0b] via-[#dc2626] to-[#9f1239]"></div>
-              <div className="text-xs font-semibold text-slate-600">&gt; 20 %</div>
+              <div className="text-xs font-semibold text-slate-600">Urgence absolue</div>
             </div>
           </div>
           
-          <div className="w-full h-[65vh] min-h-[500px] bg-slate-50">
+          <div className="w-full h-[80vh] min-h-[500px] bg-slate-50">
             {mapData.features ? (
               <ComposableMap projection="geoMercator" projectionConfig={{ center: [2.4, 47], scale: 2300 }} className="w-full h-full outline-none">
                 <Geographies geography={mapData}>
                   {({ geographies }) => geographies.map(geo => {
-                    const energie = geo.properties.energivores;
-                    const fill = getEnergiColor(energie);
+                    const score = geo.properties.score;
+                    const fill = getScoreColor(score);
                     return (
                       <Geography 
                         key={geo.rsmKey} 
@@ -231,40 +345,40 @@ const ParcSocialPage = () => {
           {hoveredDep && (
             <div className="fixed z-50 bg-white/95 backdrop-blur shadow-xl border border-slate-200 rounded-lg p-3 pointer-events-none" style={{ left: mousePos.x + 15, top: mousePos.y + 15 }}>
               <div className="font-bold text-slate-800 border-b border-gray-100 pb-1 mb-1">{hoveredDep.nom} ({hoveredDep.code})</div>
-              <div className="text-sm text-slate-600">Âge moyen : <strong>{hoveredDep.age ? hoveredDep.age.toFixed(1) : 'N/A'} ans</strong></div>
-              <div className="text-sm text-slate-600">Loyer moyen : <strong>{hoveredDep.loyer ? hoveredDep.loyer.toFixed(2) : 'N/A'} €/m²</strong></div>
+              <div className="text-sm font-semibold text-rose-600 mb-1">Score de vétusté : {hoveredDep.score ? hoveredDep.score.toFixed(0) : 'N/A'}/100</div>
+              <div className="text-sm text-slate-600">Âge moyen du parc : <strong>{hoveredDep.age ? hoveredDep.age.toFixed(1) : 'N/A'} ans</strong></div>
               <div className="text-sm text-slate-600">Passoires thermiques : <strong>{hoveredDep.energivores ? hoveredDep.energivores.toFixed(1) : 'N/A'} %</strong></div>
               <div className="text-sm text-slate-600">Vacance sociale : <strong>{hoveredDep.vacance ? hoveredDep.vacance.toFixed(1) : 'N/A'} %</strong></div>
             </div>
           )}
         </div>
 
-        {/* ROW 2 : ENERGIES VS LOYER */}
+        {/* ROW 2 : PRIX VS QUALITE */}
         <div className="w-full flex flex-col xl:flex-row gap-6">
           <div className="w-full xl:w-1/4 flex flex-col justify-center px-2">
-            <h4 className="text-xl font-extrabold text-slate-800 mb-3">Énergivores × Loyer moyen</h4>
+            <h4 className="text-xl font-extrabold text-slate-800 mb-3">Prix vs Qualité</h4>
             <p className="text-sm text-slate-600 mb-3 leading-relaxed">
-              Les parcs sociaux les plus chers sont-ils nécessairement les mieux rénovés ?
+              Est-ce que les gens paient cher pour des passoires ?
             </p>
             <p className="text-sm text-slate-600 leading-relaxed">
-              En croisant la <strong>part de passoires thermiques</strong> avec le <strong>loyer moyen</strong>, on devrait observer une véritable relation inverse si le coût du loyer garantit un logement économe.
+              C'est le graphique de la <strong>"justice sociale"</strong>. Les points en haut à droite représentent les anomalies à corriger : un <strong>loyer moyen élevé</strong> pour un <strong>taux de passoires thermiques énorme</strong>.
             </p>
           </div>
           <div className="w-full xl:w-3/4 bg-white rounded-xl shadow-sm border border-slate-200 p-5">
-            <h3 className="text-md font-bold text-slate-800 mb-1">Passoires thermiques vs Loyer moyen</h3>
-            <p className="text-xs text-slate-500 mb-4">Loyer plus bas = parc plus vétuste (Corrélation attendue)</p>
+            <h3 className="text-md font-bold text-slate-800 mb-1">Prix vs Qualité (Loyer x Énergivores)</h3>
+            <p className="text-xs text-slate-500 mb-4">La double peine : Taux d'énergivores (Y) et Loyer (X)</p>
             <div className="h-[280px] w-full">
               <Scatter 
-                data={energiesLoyerData} 
+                data={prixQualiteData} 
                 options={{
                   maintainAspectRatio: false,
                   plugins: { 
                     legend: { display: false },
-                    tooltip: { callbacks: { label: c => `${c.raw.nom}: Énergivores ${c.raw.x}% | Loyer ${c.raw.y}€` } } 
+                    tooltip: { callbacks: { label: c => `${c.raw.nom}: Loyer ${c.raw.x}€/m² | Énergivores ${c.raw.y}%` } } 
                   },
                   scales: { 
-                    x: { title: { display: true, text: 'Passoires thermiques (%)', font: { size: 11, weight: '600' } } }, 
-                    y: { title: { display: true, text: 'Loyer moyen (€/m²)', font: { size: 11, weight: '600' } } } 
+                    x: { title: { display: true, text: 'Loyer moyen (€/m²)', font: { size: 11, weight: '600' } } }, 
+                    y: { title: { display: true, text: 'Passoires thermiques (%)', font: { size: 11, weight: '600' } } } 
                   }
                 }} 
               />
@@ -275,8 +389,8 @@ const ParcSocialPage = () => {
         {/* ROW 3 : FLUX */}
         <div className="w-full flex flex-col xl:flex-row gap-6">
           <div className="w-full xl:w-3/4 bg-white rounded-xl shadow-sm border border-slate-200 p-5">
-             <h3 className="text-md font-bold text-slate-800 mb-1">Mouvements du Parc Social (Entrées / Sorties)</h3>
-             <p className="text-xs text-slate-500 mb-4">Les mises en location (+), démolitions et ventes (-) transforment le parc.</p>
+             <h3 className="text-md font-bold text-slate-800 mb-1">Mouvements du Parc Social (Solde Net)</h3>
+             <p className="text-xs text-slate-500 mb-4">Mises en location (+) vs Sorties (-). La courbe représente le Solde Net.</p>
              <div className="h-[280px] w-full">
                <Bar 
                  data={fluxData} 
@@ -287,10 +401,10 @@ const ParcSocialPage = () => {
           <div className="w-full xl:w-1/4 flex flex-col justify-center px-2">
             <h4 className="text-xl font-extrabold text-slate-800 mb-3">Dynamique de l'offre</h4>
             <p className="text-sm text-slate-600 mb-3 leading-relaxed">
-              Un parc social n'est pas figé : il évolue chaque année au gré des livraisons, des ventes ou des démolitions (Programme de Rénovation Urbaine).
+              Le <strong>Solde Net</strong> (Ligne Jaune) révèle si le parc s'agrandit ou se rétrécit. 
             </p>
             <p className="text-sm text-slate-600 leading-relaxed">
-              Si les sorties (démolitions et ventes) s'accumulent sans compensation par du neuf, l'offre sociale du territoire se contracte au détriment des mal-logés.
+              Si la ligne passe en-dessous de 0 (point rouge), cela signifie qu'un département détruit et/ou vend plus de logements sociaux qu'il n'en construit (Alerte !).
             </p>
           </div>
         </div>
@@ -298,10 +412,23 @@ const ParcSocialPage = () => {
         {/* ROW 4 */}
         <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-6">
            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex flex-col">
-             <h3 className="text-md font-bold text-slate-800 mb-1 leading-snug">Âge moyen × Taux de vacance</h3>
-             <p className="text-xs text-slate-500 mb-4 line-clamp-1">Un parc ancien peine-t-il plus à trouver preneur ?</p>
+             <h3 className="text-md font-bold text-slate-800 mb-1 leading-snug">Attractivité vs Coût</h3>
+             <p className="text-xs text-slate-500 mb-4 line-clamp-2">Loyer (X) vs Attributions (Y). Volume des bulles = Nb total de logements.</p>
              <div className="h-[280px] w-full mt-auto">
-               <Scatter data={scatterAgeVacanceData} options={{ maintainAspectRatio: false, plugins: { tooltip: { callbacks: { label: c => `${c.raw.nom}: Age ${c.raw.x} | Vacance ${c.raw.y}%` } } } }} />
+               <Scatter 
+                 data={attractiviteCoutData} 
+                 options={{ 
+                   maintainAspectRatio: false, 
+                   plugins: { 
+                     tooltip: { callbacks: { label: c => `${c.raw.nom}: Loyer ${c.raw.x}€ | ${c.raw.y} attributions | Parc: ${c.raw.nb_logements}` } },
+                     legend: { display: false }
+                   },
+                   scales: {
+                     x: { title: { display: true, text: 'Loyer moyen (€/m²)', font: { size: 10 } } },
+                     y: { title: { display: true, text: 'Mises en location', font: { size: 10 } } }
+                   }
+                  }} 
+               />
              </div>
            </div>
 

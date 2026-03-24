@@ -1,18 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
 import { apiClient } from "../service/mainapi";
 import {
-  Chart as ChartJS, CategoryScale, LinearScale, LogarithmicScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend
+  Chart as ChartJS, CategoryScale, LinearScale, LogarithmicScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend, RadialLinearScale, Filler
 } from "chart.js";
-import { Bar, Scatter, Bubble } from "react-chartjs-2";
+import { Bar, Bubble, Radar } from "react-chartjs-2";
 import SidebarPopulation from "../components/SidebarPopulation";
 
 // Register custom charts
-ChartJS.register(CategoryScale, LinearScale, LogarithmicScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend);
+ChartJS.register(CategoryScale, LinearScale, LogarithmicScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend, RadialLinearScale, Filler);
 
 const PopulationPage = () => {
   const [rawData, setRawData] = useState([]);
-  const [showDomNatMig, setShowDomNatMig] = useState(false);
   const [sansGers, setSansGers] = useState(false);
+  const [sortJeunes, setSortJeunes] = useState('asc');
+  const [sortPauvrete, setSortPauvrete] = useState('desc');
+  const [selectedRadarDept, setSelectedRadarDept] = useState('01');
 
   useEffect(() => {
     const load = async () => {
@@ -22,15 +24,12 @@ const PopulationPage = () => {
     load();
   }, []);
 
-  // Fonction réutilisable pour exclure les DOM-TOM (codes commençant par 97 ou 98)
-  // afin d'éviter qu'ils n'écrasent/étirent les échelles des graphiques à cause de valeurs extrêmes.
   const isMetropole = (code) => {
     if (!code) return false;
     const strCode = String(code);
     return !strCode.startsWith("97") && !strCode.startsWith("98");
   };
 
-  // Filtrer sur l'année la plus récente (Toutes les données, DOM inclus)
   const latestDataAll = useMemo(() => {
     if (!rawData.length) return [];
     const anneeMax = Math.max(...rawData.map(s => Number(s.annee)).filter(n => !isNaN(n)));
@@ -39,14 +38,11 @@ const PopulationPage = () => {
       .map(d => ({ ...d, nom: d.nom_departement || d.nom, code: d.code_departement || d.code }));
   }, [rawData]);
 
-  // Données restreintes à la Métropole (sans les DOM)
   const latestDataMetropole = useMemo(() => {
     return latestDataAll.filter(d => isMetropole(d.code));
   }, [latestDataAll]);
 
-  // 1. BUBBLE CHART : Chômage (X) × Pauvreté (Y) × Taux log. sociaux (R)
-  // Commentaire : Triple corrélation entre précarité, chômage et présence du parc social.
-  // Plus un département est pauvre et chômeur, plus il a de logements sociaux — mais pas toujours.
+  // 1. BUBBLE CHART
   const bubbleData = useMemo(() => {
     const points = latestDataMetropole
       .filter(d => !isNaN(Number(d.taux_chomage)) && !isNaN(Number(d.taux_pauvrete)) && !isNaN(Number(d.taux_logements_sociaux)))
@@ -54,7 +50,7 @@ const PopulationPage = () => {
       .map(d => ({
         x: Number(d.taux_chomage),
         y: Number(d.taux_pauvrete),
-        r: Number(d.taux_logements_sociaux) / 1.2, // Scaling size for readability
+        r: Number(d.taux_logements_sociaux) / 1.2,
         code: d.code,
         nom: d.nom,
         realR: Number(d.taux_logements_sociaux)
@@ -64,8 +60,8 @@ const PopulationPage = () => {
       datasets: [{
         label: 'Départements',
         data: points,
-        backgroundColor: 'rgba(56, 189, 248, 0.6)', // Blue-400 slightly transparent
-        borderColor: '#0284c7', // Blue-600
+        backgroundColor: 'rgba(56, 189, 248, 0.6)',
+        borderColor: '#0284c7',
         borderWidth: 1,
         hoverBackgroundColor: 'rgba(2, 132, 199, 0.8)'
       }]
@@ -81,25 +77,17 @@ const PopulationPage = () => {
           label: (ctx) => `${ctx.raw.nom}: Chômage ${ctx.raw.x}% | Pauvreté ${ctx.raw.y}% | Sociaux ${ctx.raw.realR}%`
         }
       }
-    },
-    scales: {
-      x: { title: { display: true, text: 'Taux de chômage (%)', font: { size: 12, weight: '600' } } },
-      y: { title: { display: true, text: 'Taux de pauvreté (%)', font: { size: 12, weight: '600' } } }
     }
   };
 
-  // 2. BAR GROUPÉ : Solde naturel vs migratoire (Groupé par Région pour lisibilité) INCLUS DOM
-  // Commentaire : Parce que la lecture de deux barres côte à côte n'est pas intuitive pour tout le monde — 
-  // il faut expliquer que quand le solde naturel est négatif mais le total positif, c'est la migration qui sauve la démographie.
+  // 2. BAR GROUPÉ : Solde naturel vs migratoire (sans DOM)
   const barNatMigData = useMemo(() => {
     const grouped = {};
-    latestDataAll.forEach(d => {
+    latestDataMetropole.forEach(d => {
       let r = d.nom_region;
       if (!r) return;
-      const isDom = !isMetropole(d.code);
-      if (isDom && !showDomNatMig) return;
       
-      if (!grouped[r]) grouped[r] = { nat: [], mig: [], cnt: 0, isDom: isDom };
+      if (!grouped[r]) grouped[r] = { nat: [], mig: [], cnt: 0 };
       if (!isNaN(Number(d.contribution_solde_naturel)) && !isNaN(Number(d.contribution_solde_migratoire))) {
         grouped[r].nat.push(Number(d.contribution_solde_naturel));
         grouped[r].mig.push(Number(d.contribution_solde_migratoire));
@@ -107,44 +95,87 @@ const PopulationPage = () => {
       }
     });
 
-    const regions = Object.keys(grouped);
-    regions.sort((a, b) => {
-      // Les DOM à la fin
-      if (grouped[a].isDom && !grouped[b].isDom) return 1;
-      if (!grouped[a].isDom && grouped[b].isDom) return -1;
-      // Puis par ordre alphabétique
-      return a.localeCompare(b);
+    const regionsData = Object.keys(grouped).map(r => {
+      const g = grouped[r];
+      const natAvg = g.cnt > 0 ? g.nat.reduce((a, b) => a + b, 0) / g.cnt : 0;
+      const migAvg = g.cnt > 0 ? g.mig.reduce((a, b) => a + b, 0) / g.cnt : 0;
+      return { r, natAvg, migAvg, total: natAvg + migAvg };
     });
 
-    const natAvg = regions.map(r => {
-      const g = grouped[r];
-      return g.cnt > 0 ? g.nat.reduce((a, b) => a + b, 0) / g.cnt : 0;
+    // Score du plus haut au plus bas total
+    regionsData.sort((a, b) => {
+      return b.total - a.total;
     });
-    const migAvg = regions.map(r => {
-      const g = grouped[r];
-      return g.cnt > 0 ? g.mig.reduce((a, b) => a + b, 0) / g.cnt : 0;
-    });
+
+    const natAvgArr = regionsData.map(d => d.natAvg);
+    const migAvgArr = regionsData.map(d => d.migAvg);
 
     return {
-      labels: regions.map(r => {
-        let label = r.substring(0, 10) + (r.length > 10 ? '.' : '');
-        if (grouped[r].isDom) label += ' (DOM)';
-        return label;
-      }),
+      labels: regionsData.map(d => d.r.substring(0, 10) + (d.r.length > 10 ? '.' : '')),
       datasets: [
         {
           label: 'Solde Naturel',
-          data: natAvg,
-          backgroundColor: regions.map(r => grouped[r].isDom ? '#22c55e' : '#38bdf8'), // Green-500 for DOM, Sky-400 for Metropole
+          data: natAvgArr,
+          backgroundColor: natAvgArr.map(val => val >= 0 ? '#22c55e' : '#f97316'), 
         },
         {
           label: 'Solde Migratoire',
-          data: migAvg,
-          backgroundColor: regions.map(r => grouped[r].isDom ? '#166534' : '#818cf8'), // Green-800 for DOM, Indigo-400 for Metropole
+          data: migAvgArr,
+          backgroundColor: '#3b82f6', 
+          borderColor: natAvgArr.map((nat, i) => (nat < 0 && (nat + migAvgArr[i]) > 0) ? '#bef264' : 'transparent'),
+          borderWidth: natAvgArr.map((nat, i) => (nat < 0 && (nat + migAvgArr[i]) > 0) ? 3 : 0),
+        },
+        {
+          type: 'line',
+          label: 'Ligne d\'équilibre (0)',
+          data: regionsData.map(() => 0),
+          borderColor: '#1e293b',
+          borderWidth: 2,
+          pointRadius: 0,
+          fill: false
         }
       ]
     };
-  }, [latestDataAll, showDomNatMig]);
+  }, [latestDataMetropole]);
+
+  const natMigPlugin = {
+    id: 'scoreNatMig',
+    afterDatasetsDraw(chart) {
+      const { ctx, data, scales: { x, y } } = chart;
+      if(!data.datasets[1]) return;
+      ctx.save();
+      
+      const natSet = data.datasets[0].data;
+      const migSet = data.datasets[1].data;
+      const meta = chart.getDatasetMeta(1);
+      
+      meta.data.forEach((bar, index) => {
+        const total = natSet[index] + migSet[index];
+        const displayScore = total > 0 ? `+${total.toFixed(1)}` : total.toFixed(1);
+        
+        ctx.fillStyle = (natSet[index] < 0 && total > 0) ? '#65a30d' : '#475569';
+        ctx.font = 'bold 11px sans-serif';
+        ctx.textAlign = 'center';
+        
+        const y0 = y.getPixelForValue(0);
+        const yNat = y.getPixelForValue(natSet[index]);
+        const yMig = y.getPixelForValue(migSet[index]);
+
+        if (total >= 0) {
+          ctx.textBaseline = 'bottom';
+          let yPos = Math.min(yNat, yMig);
+          if (yPos > y0) yPos = y0;
+          ctx.fillText(displayScore, x.getPixelForTick(index), yPos - 5);
+        } else {
+          ctx.textBaseline = 'top';
+          let yPos = Math.max(yNat, yMig);
+          if (yPos < y0) yPos = y0;
+          ctx.fillText(displayScore, x.getPixelForTick(index), yPos + 5);
+        }
+      });
+      ctx.restore();
+    }
+  };
 
   const barNatMigOptions = {
     maintainAspectRatio: false,
@@ -159,148 +190,161 @@ const PopulationPage = () => {
     }
   };
 
-  // 3. SCATTER : Taux de pauvreté (X) × Variation de population (Y)
-  // Commentaire : Parce que la conclusion contre-intuitive — certains territoires pauvres croissent encore — mérite d'être explicitée. 
-  // Sans texte le visiteur va chercher une tendance claire, ne pas en trouver, et penser que le gra^hique est raté 
-  // alors que c'est justement l'absence de corrélation qui est le message.
-  const scatterPauvreteVarData = useMemo(() => {
-    const points = latestDataMetropole
-      .filter(d => !isNaN(Number(d.taux_pauvrete)) && !isNaN(Number(d.variation_population)))
-      .map(d => ({
-        x: Number(d.taux_pauvrete),
-        y: Number(d.variation_population),
-        code: d.code,
-        nom: d.nom
-      }));
+  // 3. BAR + LINE : Pauvreté et Densité
+  const barPauvreteDensiteData = useMemo(() => {
+    let deps = [...latestDataMetropole]
+      .filter(d => !isNaN(Number(d.taux_pauvrete)) && !isNaN(Number(d.densite)))
+      .sort((a,b) => {
+        if (sortPauvrete === 'asc') return Number(a.taux_pauvrete) - Number(b.taux_pauvrete);
+        return Number(b.taux_pauvrete) - Number(a.taux_pauvrete);
+      })
+      .slice(0, 30);
 
     return {
-      datasets: [{
-        label: 'Départements',
-        data: points,
-        backgroundColor: '#fb923c', // Orange-400
-        pointRadius: 4,
-        pointHoverRadius: 7
-      }]
-    };
-  }, [latestDataMetropole]);
-
-  const scatterPauvreteVarOptions = {
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        callbacks: {
-          label: (ctx) => `${ctx.raw.nom}: Pauvreté ${ctx.raw.x}% | Variation Pop. ${ctx.raw.y}`
+      labels: deps.map(d => d.nom.substring(0, 10)),
+      datasets: [
+        {
+          type: 'line',
+          label: 'Densité (hab/km²)',
+          data: deps.map(d => Number(d.densite)),
+          borderColor: '#1e293b',
+          borderWidth: 2,
+          pointBackgroundColor: '#1e293b',
+          pointRadius: 3,
+          yAxisID: 'y1'
+        },
+        {
+          type: 'bar',
+          label: 'Taux de pauvreté (%)',
+          data: deps.map(d => Number(d.taux_pauvrete)),
+          backgroundColor: '#fb923c',
+          borderRadius: 2,
+          yAxisID: 'y'
         }
-      }
-    },
+      ]
+    };
+  }, [latestDataMetropole, sortPauvrete]);
+
+  const barPauvreteDensiteOptions = {
+    maintainAspectRatio: false,
+    plugins: { legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 10 } } },
     scales: {
-      x: { title: { display: true, text: 'Taux de pauvreté (%)', font: { size: 11, weight: '600' } } },
-      y: { title: { display: true, text: 'Variation Pop. (/1000)', font: { size: 11, weight: '600' } } }
+      y: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'Pauvreté (%)' } },
+      y1: { type: 'logarithmic', display: true, position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'Densité (log)' }, ticks: { callback: val => [10, 100, 1000, 10000].includes(val) ? val : '' } }
     }
   };
 
-  // 4A. BAR EMPILÉ : % moins de 20 ans vs 60 ans et + par Région (pour la lisibilité)
-  // Commentaire : Identifie les territoires vieillissants vs jeunes.
-  // Un département avec 35% de +60 ans aura des besoins en logement très différents d'un département jeune.
+  // 4A. BAR EMPILÉ : Jeunes vs Seniors
   const barAgesData = useMemo(() => {
-    const grouped = {};
-    latestDataMetropole.forEach(d => {
-      let r = d.nom_region;
-      if (!r) return;
-      if (!grouped[r]) grouped[r] = { m20: [], p60: [], cnt: 0 };
-      if (!isNaN(Number(d.pct_moins_20ans)) && !isNaN(Number(d.pct_plus_60ans))) {
-        grouped[r].m20.push(Number(d.pct_moins_20ans));
-        grouped[r].p60.push(Number(d.pct_plus_60ans));
-        grouped[r].cnt++;
-      }
-    });
+    let deps = latestDataMetropole
+      .filter(d => !isNaN(Number(d.pct_moins_20ans)) && !isNaN(Number(d.pct_plus_60ans)))
+      .map(d => ({
+        nom: d.nom,
+        m20: Number(d.pct_moins_20ans),
+        p60: Number(d.pct_plus_60ans)
+      }));
 
-    const regions = Object.keys(grouped).slice(0, 15);
-    regions.sort();
+    if (sortJeunes === 'asc') {
+      deps.sort((a,b) => b.p60 - a.p60); 
+    } else {
+      deps.sort((a,b) => b.m20 - a.m20); 
+    }
 
-    const m20Avg = regions.map(r => {
-      const g = grouped[r];
-      return g.cnt > 0 ? g.m20.reduce((a, b) => a + b, 0) / g.cnt : 0;
-    });
-    const p60Avg = regions.map(r => {
-      const g = grouped[r];
-      return g.cnt > 0 ? g.p60.reduce((a, b) => a + b, 0) / g.cnt : 0;
-    });
-    // Reste (20 à 60 ans) pour boucher la barre à 100%
-    const midAvg = m20Avg.map((val, idx) => 100 - val - p60Avg[idx]);
+    const sliced = deps.slice(0, 15);
 
     return {
-      labels: regions.map(r => r.substring(0, 10) + (r.length > 10 ? '.' : '')),
+      labels: sliced.map(d => d.nom.substring(0, 10)),
       datasets: [
-        { label: 'Moins de 20 ans (%)', data: m20Avg, backgroundColor: '#f472b6' }, // Pink-400
-        { label: '20 à 59 ans (%)', data: midAvg, backgroundColor: '#cbd5e1' }, // Slate-300
-        { label: '60 ans et + (%)', data: p60Avg, backgroundColor: '#3b82f6' } // Blue-500
+        { label: '60 ans et +', data: sliced.map(d=>d.p60), backgroundColor: '#3b82f6' },
+        { label: 'Moins 20 ans', data: sliced.map(d=>d.m20), backgroundColor: '#f472b6' }
       ]
     };
-  }, [latestDataMetropole]);
+  }, [latestDataMetropole, sortJeunes]);
 
   const barAgesOptions = {
     maintainAspectRatio: false,
-    plugins: {
-      legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } },
-      tooltip: { mode: 'index', intersect: false }
-    },
+    plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } }, tooltip: { mode: 'index', intersect: false } },
     responsive: true,
-    scales: {
-      x: { stacked: true },
-      y: { stacked: true, max: 100 }
-    }
+    scales: { x: { stacked: true }, y: { stacked: true } }
   };
 
-  // 4B. SCATTER : Variation de population × Taux de chômage (METROPOLE UNIQUEMENT)
-  const scatterVariationChomageData = useMemo(() => {
-    const points = latestDataMetropole
-      .filter(d => !isNaN(Number(d.variation_population)) && !isNaN(Number(d.taux_chomage)))
-      .map(d => ({
-        x: Number(d.taux_chomage),
-        y: Number(d.variation_population),
-        code: d.code,
-        nom: d.nom
-      }));
+  // 4B. RADAR : Profil socio-économique vs Moyenne Nationale
+  const radarSocioEcoData = useMemo(() => {
+    const calcAvg = (key) => latestDataAll.reduce((sum, d) => sum + (Number(d[key]) || 0), 0) / latestDataAll.filter(d => !isNaN(Number(d[key]))).length;
+    
+    const natChomage = calcAvg('taux_chomage');
+    const natPauvrete = calcAvg('taux_pauvrete');
+    const natJeunes = calcAvg('pct_moins_20ans');
+    const natSeniors = calcAvg('pct_plus_60ans');
+    const natMigratoire = calcAvg('contribution_solde_migratoire');
+    
+    const target = latestDataAll.find(d => String(d.code) === String(selectedRadarDept)) || latestDataAll[0];
+    
+    // Pour éviter une division par zéro si la moyenne est très proche de 0
+    const index = (val, nat) => nat ? (val / nat) * 100 : 100;
 
     return {
-      datasets: [{
-        label: 'Départements (Métropole)',
-        data: points,
-        backgroundColor: '#a855f7', // Purple-500
-        pointRadius: 4,
-        pointHoverRadius: 7
-      }]
-    };
-  }, [latestDataMetropole]);
-
-  const scatterVariationChomageOptions = {
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        callbacks: {
-          label: (ctx) => `${ctx.raw.nom}: Chômage ${ctx.raw.x}% | Variation Pop. ${ctx.raw.y}`
+      labels: [
+        'Chômage (Économie)', 
+        'Pauvreté (Social)', 
+        'Jeunesse (Démographie - Jeunes)', 
+        'Seniors (Démographie - Vieux)', 
+        'Attractivité (Solde Migratoire)'
+      ],
+      datasets: [
+        {
+          label: `Moyenne Nationale (Base 100)`,
+          data: [100, 100, 100, 100, 100],
+          backgroundColor: 'rgba(148, 163, 184, 0.2)',
+          borderColor: '#94a3b8',
+          pointBackgroundColor: '#94a3b8',
+          borderWidth: 2,
+        },
+        {
+          label: target ? target.nom : 'Dép.',
+          data: target ? [
+            index(Number(target.taux_chomage) || 0, natChomage),
+            index(Number(target.taux_pauvrete) || 0, natPauvrete),
+            index(Number(target.pct_moins_20ans) || 0, natJeunes),
+            index(Number(target.pct_plus_60ans) || 0, natSeniors),
+            index(Number(target.contribution_solde_migratoire) || 0, natMigratoire)
+          ] : [0,0,0,0,0],
+          backgroundColor: 'rgba(59, 130, 246, 0.4)',
+          borderColor: '#3b82f6',
+          pointBackgroundColor: '#2563eb',
+          borderWidth: 2,
         }
+      ]
+    };
+  }, [latestDataAll, selectedRadarDept]);
+
+  const radarOptions = {
+    maintainAspectRatio: false,
+    scales: {
+      r: {
+        angleLines: { color: '#e2e8f0' },
+        grid: { color: '#e2e8f0' },
+        pointLabels: { font: { size: 11, weight: '600' }, color: '#475569' },
+        suggestedMin: 0,
+        ticks: { display: false } 
       }
     },
-    scales: {
-      x: { title: { display: true, text: 'Taux de chômage (%)', font: { size: 11, weight: '600' } } },
-      y: { title: { display: true, text: 'Variation Population (/1000)', font: { size: 11, weight: '600' } } }
-    }
+    plugins: { legend: { position: 'bottom', labels: { font: { size: 10 } } } }
   };
 
   return (
     <div className="flex w-full items-start bg-transparent min-h-screen">
       <SidebarPopulation 
-        showDomNatMig={showDomNatMig} setShowDomNatMig={setShowDomNatMig} 
         sansGers={sansGers} setSansGers={setSansGers}
+        sortJeunes={sortJeunes} setSortJeunes={setSortJeunes}
+        sortPauvrete={sortPauvrete} setSortPauvrete={setSortPauvrete}
+        selectedRadarDept={selectedRadarDept} setSelectedRadarDept={setSelectedRadarDept}
+        depsList={latestDataAll.map(d => ({code: d.code, nom: d.nom})).sort((a,b) => a.nom.localeCompare(b.nom))}
       />
 
-      <div className="flex-1 ml-[240px] lg:ml-[22%] flex flex-col gap-8 p-6 lg:p-8 lg:pt-0">
+      <div className="flex-1 flex flex-col gap-8 lg:p-8 lg:pt-0 pt-[80px] p-4 lg:ml-[25%] sm:ml-[200px] ml-0">
         
-        {/* ROW 1 : BUBBLE CHART FULL WIDTH */}
+        {/* ROW 1 : BUBBLE CHART */}
         <div className="w-full bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden relative">
           <div className="absolute top-3 left-3 px-1 py-1 z-10 text-md font-semibold text-slate-700">
             <h2 className="text-lg font-bold text-slate-800 leading-tight">Chômage, Pauvreté et Parc Social</h2>
@@ -311,65 +355,64 @@ const PopulationPage = () => {
           </div>
         </div>
 
-        {/* ROW 2 : 25% EXPLICATION GAUCHE / 75% GRAPHIQUE DROITE */}
+        {/* ROW 2 : DYNAMIQUE */}
         <div className="w-full flex flex-col lg:flex-row gap-6">
           <div className="w-full lg:w-1/4 flex flex-col justify-center px-2">
             <h4 className="text-xl font-extrabold text-slate-800 mb-3">Dynamique de population</h4>
             <p className="text-sm text-slate-600 mb-3 leading-relaxed">
-              La variation de la population repose sur deux piliers : le solde naturel (naissances - décès) et le solde migratoire.
+              La variation repose sur le solde naturel et migratoire.
             </p>
             <p className="text-sm text-slate-600 leading-relaxed">
-              Quand le solde naturel est négatif mais le total positif, c'est la <strong>migration qui sauve la démographie</strong> locale d'un territoire qui, sinon, se viderait.
+              Quand le solde naturel est négatif mais le total positif, c'est la <strong>migration qui sauve la démographie</strong> locale.
             </p>
           </div>
-          <div className="w-full lg:w-3/4 bg-white rounded-xl shadow-sm border border-slate-200 p-5">
-             <h3 className="text-md font-bold text-slate-800 mb-1">Solde naturel vs Solde migratoire</h3>
+          <div className="w-full lg:w-3/4 bg-white rounded-xl shadow-sm border border-slate-200 p-5 relative">
+             <div className="flex justify-between items-start mb-1 flex-wrap">
+               <h3 className="text-md font-bold text-slate-800">Solde naturel vs Solde migratoire</h3>
+               <div className="flex items-center gap-2 text-[10px] bg-slate-50 px-2 py-1 rounded border border-slate-200">
+                 <div className="w-3 h-3 rounded-full border-[2px] border-[#bef264] bg-[#3b82f6]"></div>
+                 <span className="font-semibold text-slate-600">"Sauvé" par la migration</span>
+               </div>
+             </div>
              <p className="text-xs text-slate-500 mb-4">Contribution à l'évolution démographique par région.</p>
              <div className="h-[280px] w-full">
-               <Bar data={barNatMigData} options={barNatMigOptions} />
+               <Bar data={barNatMigData} options={barNatMigOptions} plugins={[natMigPlugin]} />
              </div>
           </div>
         </div>
 
-        {/* ROW 3 : 75% GRAPHIQUE GAUCHE / 25% EXPLICATION DROITE */}
+        {/* ROW 3 : PAUVRETE ET DENSITE */}
         <div className="w-full flex flex-col lg:flex-row gap-6">
           <div className="w-full lg:w-3/4 bg-white rounded-xl shadow-sm border border-slate-200 p-5">
-             <h3 className="text-md font-bold text-slate-800 mb-1">Pauvreté × Variation de population</h3>
-             <p className="text-xs text-slate-500 mb-4">Mise en évidence de l'absence de règle universelle liant richesse et croissance démographique.</p>
+             <h3 className="text-md font-bold text-slate-800 mb-1">Pauvreté et Densité</h3>
+             <p className="text-xs text-slate-500 mb-4">L'intuition "Pauvre = peu dense (rural)" n'est pas toujours vraie.</p>
              <div className="h-[280px] w-full">
-               <Scatter data={scatterPauvreteVarData} options={scatterPauvreteVarOptions} />
+               <Bar data={barPauvreteDensiteData} options={barPauvreteDensiteOptions} />
              </div>
           </div>
           <div className="w-full lg:w-1/4 flex flex-col justify-center px-2">
-            <h4 className="text-xl font-extrabold text-slate-800 mb-3">Croissance paradoxale</h4>
+            <h4 className="text-xl font-extrabold text-slate-800 mb-3">La fracture territoriale</h4>
             <p className="text-sm text-slate-600 mb-3 leading-relaxed">
-              Il est contre-intuitif d'imaginer des territoires pauvres attirer massivement. Pourtant, certains départements précaires croissent fortement.
-            </p>
-            <p className="text-sm text-slate-600 leading-relaxed">
-              Cette absence de corrélation montre que l'attractivité d'un territoire n'est pas systématiquement dictée par sa richesse économique locale moyenne.
+              De forts pics de densité dans les zones très touchées par la précarité soulignent l'existence d'une pauvreté urbaine forte.
             </p>
           </div>
         </div>
 
-        {/* ROW 4 : 2 GRAPHIQUES 50/50 */}
+        {/* ROW 4 : 50/50 */}
         <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Ligne 4 Gauche : Bar Empilé Age */}
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex flex-col">
             <h3 className="text-md font-bold text-slate-800 mb-1 leading-snug">Répartition : Jeunes vs Seniors</h3>
-            <p className="text-xs text-slate-500 mb-4 line-clamp-1">Identifie les territoires vieillissants face aux régions d'avenir.</p>
+            <p className="text-xs text-slate-500 mb-2">Comparons la part des moins de 20 ans face à celle des plus de 60 ans.</p>
             <div className="h-[280px] w-full mt-auto">
               <Bar data={barAgesData} options={barAgesOptions} />
             </div>
           </div>
           
-          {/* Ligne 4 Droite : Scatter Variation x Chômage */}
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex flex-col">
-            <h3 className="text-md font-bold text-slate-800 mb-1 leading-snug">Croissance et Chômage</h3>
-            <p className="text-xs text-slate-500 mb-4 line-clamp-1">
-              Variation de la population selon le taux de chômage.
-            </p>
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex flex-col relative z-20">
+            <h3 className="text-md font-bold text-slate-800 mb-1 leading-snug">Profil socio-économique</h3>
+            <p className="text-xs text-slate-500 mb-2">Moyenne Nationale = 100</p>
             <div className="h-[280px] w-full mt-auto">
-              <Scatter data={scatterVariationChomageData} options={scatterVariationChomageOptions} />
+              <Radar data={radarSocioEcoData} options={radarOptions} />
             </div>
           </div>
         </div>
