@@ -6,6 +6,8 @@ const HomePage = () => {
     { to: "/parc-social", label: "Parc social" },
     { to: "/logement", label: "Stat logement" },
     { to: "/population", label: "Population" },
+    { to: "/test", label: "Création" },
+    { to: "/comparateur", label: "Comparateur" },
   ];
 
   return (
@@ -26,12 +28,6 @@ const HomePage = () => {
           >
             Visualisez des données officielles de logement social en France
           </h1>
-          <p
-            className="text-base sm:text-xl text-slate-200 sm:text-slate-100 mb-8 leading-relaxed drop-shadow-[0_2px_10px_rgba(0,0,0,0.45)] home-hero-enter"
-            style={{ animationDelay: "120ms" }}
-          >
-            Faites défiler sur votre template puis lancez votre propre analyse.
-          </p>
 
           <Link
             to="/test"
