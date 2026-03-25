@@ -111,8 +111,8 @@ const SidebarParcSocial = ({
 
   return (
     <aside className="static xl:fixed top-0 left-0 w-full xl:w-[20%] h-auto xl:h-screen bg-[#fafaf8] text-[#374151] border-b xl:border-r xl:border-b-0 border-[#e5e7eb] p-5 overflow-y-auto z-20 flex flex-col">
-      <h2 className="text-lg font-extrabold tracking-widest text-[#111827] mb-4 border-b border-[#d1d5db] pb-2.5 uppercase text-center xl:text-left mt-2 xl:mt-0">
-        DATAVIZ
+      <h2 className="text-lg font-extrabold tracking-widest text-[#111827] mb-4 border-b border-[#d1d5db] pb-2.5 text-center xl:text-left mt-2 xl:mt-0">
+        SocialScope
       </h2>
 
       <div className="flex-1 flex flex-col gap-3">

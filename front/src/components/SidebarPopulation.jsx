@@ -8,16 +8,19 @@ const SidebarPopulation = ({
 }) => {
   return (
     <aside className="static xl:fixed top-0 left-0 w-full xl:w-[20%] h-auto xl:h-screen bg-[#fafaf8] text-[#374151] border-b xl:border-r xl:border-b-0 border-[#e5e7eb] p-5 overflow-y-auto z-20 flex flex-col">
-      <h2 className="text-lg font-extrabold tracking-widest text-[#111827] mb-4 border-b border-[#d1d5db] pb-2.5 uppercase text-center xl:text-left mt-2 xl:mt-0">
-        DATAVIZ
+<h2 className="text-lg font-extrabold tracking-widest text-[#111827] mb-4 border-b border-[#d1d5db] pb-2.5 text-center xl:text-left mt-2 xl:mt-0">
+        SocialScope
       </h2>
 
       <div className="flex-1 flex flex-col gap-3">
         
         {/* ROW 1 */}
-        <div>
-          <h3 className="text-[15px] font-bold text-slate-800 mb-1.5 leading-snug">Chômage, Pauvreté et Parc Social</h3>
-          <div className="flex flex-col gap-2">
+        <div className="mb-6">
+          <div className="flex items-center gap-3 mb-2">
+            <h3 className="text-[13px] font-bold text-slate-800 leading-snug">Chômage, Pauvreté et Parc Social</h3>
+            <div className="flex-1 h-0.5 bg-black"></div>
+          </div>
+          <div className="flex flex-col gap-1.5">
             <button
               onClick={() => setSansGers(!sansGers)}
               className={`w-full text-left px-3 py-1.5 text-xs font-medium border border-slate-300 rounded-md transition-colors ${
@@ -32,9 +35,12 @@ const SidebarPopulation = ({
         </div>
 
         {/* ROW 3 */}
-        <div className="mt-2">
-          <h3 className="text-[15px] font-bold text-slate-800 mb-1.5 leading-snug">Pauvreté et Densité</h3>
-          <div className="flex flex-col gap-2">
+        <div className="mb-6">
+          <div className="flex items-center gap-3 mb-2">
+            <h3 className="text-[13px] font-bold text-slate-800 leading-snug">Pauvreté et Densité</h3>
+            <div className="flex-1 h-0.5 bg-black"></div>
+          </div>
+          <div className="flex flex-col gap-1.5">
             <button
               onClick={() => setSortPauvrete && setSortPauvrete('asc')}
               className={`w-full text-left px-3 py-1.5 text-xs font-medium border border-slate-300 rounded-md transition-colors ${
@@ -59,9 +65,12 @@ const SidebarPopulation = ({
         </div>
 
         {/* ROW 4 - GAUCHE */}
-        <div className="mt-2">
-          <h3 className="text-[15px] font-bold text-slate-800 mb-1.5 leading-snug">Répartition : Jeunes vs Seniors</h3>
-          <div className="flex flex-col gap-2">
+        <div className="mb-6">
+          <div className="flex items-center gap-3 mb-2">
+            <h3 className="text-[13px] font-bold text-slate-800 leading-snug">Répartition : Jeunes vs Seniors</h3>
+            <div className="flex-1 h-0.5 bg-black"></div>
+          </div>
+          <div className="flex flex-col gap-1.5">
             <button
               onClick={() => setSortJeunes && setSortJeunes('asc')}
               className={`w-full text-left px-3 py-1.5 text-xs font-medium border border-slate-300 rounded-md transition-colors ${
@@ -86,8 +95,11 @@ const SidebarPopulation = ({
         </div>
 
         {/* ROW 4 - DROITE */}
-        <div className="mt-2 text-left">
-          <h3 className="text-[15px] font-bold text-slate-800 mb-1.5 leading-snug">Profil départemental</h3>
+        <div className="mb-6 text-left">
+          <div className="flex items-center gap-3 mb-2">
+            <h3 className="text-[15px] font-bold text-slate-800 leading-snug">Profil départemental</h3>
+            <div className="flex-1 h-0.5 bg-black"></div>
+          </div>
           {depsList && depsList.length > 0 ? (
             <select
               value={selectedRadarDept || '01'}
