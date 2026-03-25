@@ -19,65 +19,69 @@ function App() {
   const estAccueil = location.pathname === "/";
 
   const lienNav = ({ isActive }) =>
-    `py-1 font-medium transition-colors duration-200 text-xs sm:text-sm xl:text-base ${
+    `py-1 font-medium transition-all duration-200 text-xs sm:text-sm xl:text-base pb-1 ${
       isActive
-        ? "text-[#1f2a2e] font-bold"
-        : "text-[#4a5256] hover:text-[#1f2a2e]"
+        ? "text-[#1f2a2e] font-bold border-b-2 border-[#1f2a2e]"
+        : "text-[#4a5256] hover:text-[#1f2a2e] border-b-2 border-transparent hover:border-b-2 hover:border-[#1f2a2e]"
     }`;
 
   const lienNavMobile = ({ isActive }) =>
-    `block w-full rounded-xl px-4 py-2.5 text-lg font-semibold transition-colors duration-200 ${
+    `block w-full rounded-xl px-4 py-2.5 text-lg font-semibold transition-all duration-200 border-l-4 ${
       isActive
-        ? "bg-slate-100 text-[#1f2a2e]"
-        : "text-[#2f3b40] hover:bg-slate-100"
+        ? "bg-slate-100 text-[#1f2a2e] border-l-[#1f2a2e]"
+        : "text-[#2f3b40] hover:bg-slate-100 border-l-transparent"
     }`;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#f7f7f4] to-[#ecece4] overflow-x-hidden text-[#1f2a2e]">
-      <header className="flex items-center justify-end px-2 sm:px-8 py-2 sm:py-4 relative z-10 pointer-events-none">
-        <nav
-          className="hidden sm:flex flex-row gap-2 sm:gap-4 xl:gap-6 flex-wrap justify-end items-center pointer-events-auto"
-          aria-label="Navigation principale"
+      {!estAccueil && (
+        <header className="flex items-center justify-end px-2 sm:px-8 py-2 sm:py-4 relative z-10 pointer-events-none">
+          <nav
+            className="hidden sm:flex flex-row gap-2 sm:gap-4 xl:gap-6 flex-wrap justify-end items-center pointer-events-auto"
+            aria-label="Navigation principale"
+          >
+            <NavLink to="/" end className={lienNav}>
+              Accueil
+            </NavLink>
+            <NavLink to="/parc-social" className={lienNav}>
+              Parc social
+            </NavLink>
+            <NavLink to="/logement" className={lienNav}>
+              Stat logement
+            </NavLink>
+            <NavLink to="/population" className={lienNav}>
+              Population
+            </NavLink>
+            <NavLink to="/test" className={lienNav}>
+              Création
+            </NavLink>
+            <NavLink to="/comparateur" className={lienNav}>
+              Créer vos comparaisons
+            </NavLink>
+          </nav>
+        </header>
+      )}
+
+      {!estAccueil && (
+        <button
+          type="button"
+          onClick={() => setMenuMobileOuvert((ouvert) => !ouvert)}
+          className="sm:hidden fixed top-4 right-4 z-40 h-14 w-14 rounded-full bg-[#1f2a2e] text-white shadow-lg flex items-center justify-center"
+          aria-label={
+            menuMobileOuvert
+              ? "Fermer le menu de navigation"
+              : "Ouvrir le menu de navigation"
+          }
+          aria-expanded={menuMobileOuvert}
+          aria-controls="menu-mobile"
         >
-          <NavLink to="/" end className={lienNav}>
-            Accueil
-          </NavLink>
-          <NavLink to="/parc-social" className={lienNav}>
-            Parc social
-          </NavLink>
-          <NavLink to="/logement" className={lienNav}>
-            Stat logement
-          </NavLink>
-          <NavLink to="/population" className={lienNav}>
-            Population
-          </NavLink>
-          <NavLink to="/test" className={lienNav}>
-            Création
-          </NavLink>
-          <NavLink to="/comparateur" className={lienNav}>
-            Créer vos comparaisons
-          </NavLink>
-        </nav>
-      </header>
+          <span className="text-2xl leading-none">
+            {menuMobileOuvert ? "×" : "☰"}
+          </span>
+        </button>
+      )}
 
-      <button
-        type="button"
-        onClick={() => setMenuMobileOuvert((ouvert) => !ouvert)}
-        className="sm:hidden fixed top-4 right-4 z-40 h-14 w-14 rounded-full bg-[#1f2a2e] text-white shadow-lg flex items-center justify-center"
-        aria-label={
-          menuMobileOuvert
-            ? "Fermer le menu de navigation"
-            : "Ouvrir le menu de navigation"
-        }
-        aria-expanded={menuMobileOuvert}
-        aria-controls="menu-mobile"
-      >
-        <span className="text-2xl leading-none">
-          {menuMobileOuvert ? "×" : "☰"}
-        </span>
-      </button>
-
-      {menuMobileOuvert && (
+      {!estAccueil && menuMobileOuvert && (
         <nav
           id="menu-mobile"
           className="sm:hidden fixed top-20 right-4 z-40 bg-white/95 backdrop-blur rounded-3xl shadow-lg border border-slate-200 p-4 min-w-[240px] mobile-menu-panel"
