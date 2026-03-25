@@ -21,7 +21,10 @@ const ParcSocialPage = () => {
   const [hoveredDep, setHoveredDep] = useState(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [selectedRegion, setSelectedRegion] = useState("Toutes");
-  const [sortFluxOrder, setSortFluxOrder] = useState('asc'); // 'asc' = croissant par défaut
+  const [sortFluxOrder, setSortFluxOrder] = useState('asc');
+  const [ageWeight, setAgeWeight] = useState(33);
+  const [energetiqueWeight, setEnergetiqueWeight] = useState(33);
+  const [vacanceWeight, setVacanceWeight] = useState(34);
 
   useEffect(() => {
     const load = async () => {
@@ -87,7 +90,9 @@ const ParcSocialPage = () => {
           const normAge = (age - minAge) / (maxAge - minAge || 1);
           const normEne = (ene - minEne) / (maxEne - minEne || 1);
           const normVac = (vac - minVac) / (maxVac - minVac || 1);
-          score = ((normAge + normEne + normVac) / 3) * 100;
+          // Utiliser les poids personnalisés au lieu de moyenne simple
+          const totalWeight = ageWeight + energetiqueWeight + vacanceWeight;
+          score = ((normAge * ageWeight + normEne * energetiqueWeight + normVac * vacanceWeight) / totalWeight) * 100;
         }
       }
 
@@ -110,7 +115,7 @@ const ParcSocialPage = () => {
       type: "FeatureCollection",
       features: topoFeatures
     };
-  }, [latestDataAll, geoData, latestDataMetropole]);
+  }, [latestDataAll, geoData, latestDataMetropole, ageWeight, energetiqueWeight, vacanceWeight]);
 
   const getScoreColor = (score) => {
     if (score === null || isNaN(score)) return "#e2e8f0";
@@ -301,8 +306,14 @@ const ParcSocialPage = () => {
         setSelectedRegion={setSelectedRegion} 
         sortFluxOrder={sortFluxOrder}
         setSortFluxOrder={setSortFluxOrder}
+        ageWeight={ageWeight}
+        setAgeWeight={setAgeWeight}
+        energetiqueWeight={energetiqueWeight}
+        setEnergetiqueWeight={setEnergetiqueWeight}
+        vacanceWeight={vacanceWeight}
+        setVacanceWeight={setVacanceWeight}
       />
-      <div className="flex-1 ml-0 xl:ml-[19%] flex flex-col gap-8 p-6 xl:p-8 xl:pt-0">
+      <div className="flex-1 ml-0 xl:ml-[20%] flex flex-col gap-8 p-6 xl:p-8 xl:pt-0">
         {/* ROW 1 : CHOROPLETH MAP */}
         <div className="w-full bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden relative" onMouseMove={handleMouseMove}>
           <div className="absolute top-3 left-3 z-10">

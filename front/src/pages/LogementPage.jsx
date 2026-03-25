@@ -236,7 +236,7 @@ const LogementPage = () => {
         setShowDOM={setShowDOM}
       />
       
-      <div className="flex-1 w-full lg:ml-[240px] xl:ml-[19%] flex flex-col gap-8 p-4 lg:p-8 lg:pt-0 pb-10">
+      <div className="flex-1 w-full lg:ml-[240px] xl:ml-[20%] flex flex-col gap-8 p-4 lg:p-8 lg:pt-0 pb-10">
         {/* ROW 1 : CARTE FULL WIDTH */}
         <div className="w-full bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden relative">
           <div className="w-full h-[80vh] min-h-[450px]">
