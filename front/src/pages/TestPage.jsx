@@ -143,7 +143,7 @@ const TestPage = () => {
 
 
   return (
-    <section className="p-2 lg:p-0">
+    <section className="p-2 pt-20 sm:pt-2 lg:p-0">
       {/* On utilise grid pour gerer lg: 1 col map / 1 col pour la droite (qui comprend les 2 graphs) */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-6 items-start">
         

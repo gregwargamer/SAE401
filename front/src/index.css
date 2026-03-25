@@ -1,7 +1,7 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap");
 
 body {
-  font-family: 'Outfit', 'Inter', 'Segoe UI', Arial, sans-serif;
+  font-family: "Outfit", "Inter", "Segoe UI", Arial, sans-serif;
 }
 @tailwind base;
 @tailwind components;
@@ -22,4 +22,41 @@ body {
   min-width: 320px;
   min-height: 100vh;
   color: #1f2a2e;
+}
+
+@keyframes mobileMenuIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes mobileItemIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.mobile-menu-panel {
+  animation: mobileMenuIn 220ms ease-out;
+}
+
+.mobile-menu-item {
+  opacity: 0;
+  animation: mobileItemIn 260ms ease-out forwards;
+}
+
+@media (max-width: 639px) {
+  html {
+    font-size: 17px;
+  }
 }
