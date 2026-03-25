@@ -36,3 +36,4 @@ back/migrations/*.php
 !back/migrations/.gitignore
 
 gregrun.sh
+front/vite.config.js

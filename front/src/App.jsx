@@ -4,6 +4,7 @@ import LogementPage from './pages/LogementPage';
 import ParcSocialPage from './pages/ParcSocialPage';
 import PopulationPage from './pages/PopulationPage';
 import TestPage from './pages/TestPage';
+import CustomPage from './pages/CustomPage';
 
 function App() {
   // Classe Tailwind réutilisable pour les liens de la navbar :
@@ -34,6 +35,9 @@ function App() {
           <NavLink to="/test" className={lienNav}>
             Test (Brouillon)
           </NavLink>
+          <NavLink to="/custom" className={lienNav}>
+            Comparateur
+          </NavLink>
         </nav>
       </header>
 
@@ -45,6 +49,7 @@ function App() {
           <Route path="/parc-social" element={<ParcSocialPage />} />
           <Route path="/logement" element={<LogementPage />} />
           <Route path="/population" element={<PopulationPage />} />
+          <Route path="/custom" element={<CustomPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
