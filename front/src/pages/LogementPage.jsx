@@ -228,7 +228,7 @@ const LogementPage = () => {
   };
 
   return (
-    <div className="flex w-full items-start bg-transparent min-h-screen">
+    <div className="flex w-full items-start bg-transparent min-h-screen flex-col xl:flex-row">
       <SidebarLogement 
         sortIndividuel={sortIndividuel} 
         setSortIndividuel={setSortIndividuel} 
@@ -236,7 +236,7 @@ const LogementPage = () => {
         setShowDOM={setShowDOM}
       />
 
-      <div className="flex-1 ml-[240px] lg:ml-[22%] flex flex-col gap-8 p-6 lg:p-8 lg:pt-0">
+      <div className="flex-1 ml-0 xl:ml-[22%] flex flex-col gap-8 p-6 xl:p-8 xl:pt-0">
         
         {/* ROW 1 : CARTE FULL WIDTH */}
         <div className="w-full bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden relative">

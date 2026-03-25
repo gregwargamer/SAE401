@@ -333,7 +333,7 @@ const PopulationPage = () => {
   };
 
   return (
-    <div className="flex w-full items-start bg-transparent min-h-screen">
+    <div className="flex w-full items-start bg-transparent min-h-screen flex-col xl:flex-row">
       <SidebarPopulation 
         sansGers={sansGers} setSansGers={setSansGers}
         sortJeunes={sortJeunes} setSortJeunes={setSortJeunes}
@@ -342,7 +342,7 @@ const PopulationPage = () => {
         depsList={latestDataAll.map(d => ({code: d.code, nom: d.nom})).sort((a,b) => a.nom.localeCompare(b.nom))}
       />
 
-      <div className="flex-1 flex flex-col gap-8 lg:p-8 lg:pt-0 pt-[80px] p-4 lg:ml-[25%] sm:ml-[200px] ml-0">
+      <div className="flex-1 flex flex-col gap-8 xl:p-8 xl:pt-0 pt-[20px] p-4 xl:ml-[22%] ml-0">
         
         {/* ROW 1 : BUBBLE CHART */}
         <div className="w-full bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden relative">

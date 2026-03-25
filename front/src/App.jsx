@@ -11,14 +11,14 @@ function App() {
   // - si actif : devient noir et "font-bold" (texte en gras)
   // - plus aucun bouton à contour !
   const lienNav = ({ isActive }) =>
-    `py-1 font-medium transition-colors duration-200 ${
+    `py-1 font-medium transition-colors duration-200 text-xs sm:text-sm xl:text-base ${
       isActive ? "text-[#1f2a2e] font-bold" : "text-[#4a5256] hover:text-[#1f2a2e]"
     }`;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#f7f7f4] to-[#ecece4] overflow-x-hidden text-[#1f2a2e]">
-      <header className="flex items-center justify-end px-8 pt-6 pb-3 relative z-10 pointer-events-none">
-        <nav className="flex gap-6 flex-wrap justify-end pointer-events-auto" aria-label="Navigation principale">
+      <header className="flex items-center justify-end px-2 sm:px-8 py-2 sm:py-4 relative z-10 pointer-events-none">
+        <nav className="flex flex-row gap-2 sm:gap-4 xl:gap-6 flex-wrap justify-end items-center pointer-events-auto" aria-label="Navigation principale">
           <NavLink to="/" end className={lienNav}>
             Accueil
           </NavLink>

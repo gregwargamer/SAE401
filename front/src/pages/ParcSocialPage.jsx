@@ -294,7 +294,7 @@ const ParcSocialPage = () => {
   }, [latestDataAll]);
 
   return (
-    <div className="flex w-full items-start bg-transparent min-h-screen">
+    <div className="flex w-full items-start bg-transparent min-h-screen flex-col xl:flex-row">
       <SidebarParcSocial 
         regions={regionsList} 
         selectedRegion={selectedRegion} 
@@ -302,7 +302,7 @@ const ParcSocialPage = () => {
         sortFluxOrder={sortFluxOrder}
         setSortFluxOrder={setSortFluxOrder}
       />
-      <div className="flex-1 ml-[240px] lg:ml-[22%] flex flex-col gap-8 p-6 lg:p-8 lg:pt-0">
+      <div className="flex-1 ml-0 xl:ml-[22%] flex flex-col gap-8 p-6 xl:p-8 xl:pt-0">
         {/* ROW 1 : CHOROPLETH MAP */}
         <div className="w-full bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden relative" onMouseMove={handleMouseMove}>
           <div className="absolute top-3 left-3 z-10">
