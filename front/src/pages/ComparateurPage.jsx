@@ -53,7 +53,7 @@ const FieldSelect = ({ value, onChange, exclude, colorClass, label }) => (
 );
 
 /* Page principale */
-const CustomPage = () => {
+const ComparateurPage = () => {
   const [allData, setAllData] = useState([]); const [mode, setMode] = useState("departement"); const [fieldX, setFieldX] = useState("nb_habitants"); const [fieldY, setFieldY] = useState("nb_logements"); const [chartType, setChartType] = useState("scatter"); const [selectedYear, setSelectedYear] = useState("all");
 
   useEffect(() => { getAll().then(d => setAllData(d || [])); }, []);
@@ -265,4 +265,4 @@ const CustomPage = () => {
   );
 };
 
-export default CustomPage;
+export default ComparateurPage;
