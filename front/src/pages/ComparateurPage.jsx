@@ -54,6 +54,10 @@ const ComparateurPage = () => {
   const [dep1Code, setDep1Code] = useState(null);
   const [dep2Code, setDep2Code] = useState(null);
   const [selectedYear, setSelectedYear] = useState("all");
+  const [searchDep1, setSearchDep1] = useState("");
+  const [searchDep2, setSearchDep2] = useState("");
+  const [showSugg1, setShowSugg1] = useState(false);
+  const [showSugg2, setShowSugg2] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -153,6 +157,24 @@ const ComparateurPage = () => {
 
   const hasSelection = dep1Code || dep2Code;
 
+  /* Suggestions filtrées pour dep1 */
+  const suggDep1 = useMemo(() => {
+    if (!searchDep1.trim()) return depList;
+    return depList.filter(d => 
+      String(d.code).toLowerCase().includes(searchDep1.toLowerCase()) || 
+      d.nom.toLowerCase().includes(searchDep1.toLowerCase())
+    );
+  }, [depList, searchDep1]);
+
+  /* Suggestions filtrées pour dep2 */
+  const suggDep2 = useMemo(() => {
+    if (!searchDep2.trim()) return depList;
+    return depList.filter(d => 
+      String(d.code).toLowerCase().includes(searchDep2.toLowerCase()) || 
+      d.nom.toLowerCase().includes(searchDep2.toLowerCase())
+    );
+  }, [depList, searchDep2]);
+
   return (
     <div className="flex flex-col lg:flex-row w-full items-start bg-transparent min-h-screen">
       <SidebarComparateurMap
@@ -165,11 +187,83 @@ const ComparateurPage = () => {
 
       <div className="flex-1 w-full lg:ml-[240px] xl:ml-[20%] flex flex-col gap-6 p-4 lg:p-8 lg:pt-6 pb-10">
 
-
         {/* Carte unique cliquable */}
         <div className="w-full bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
           <div className="w-full h-[55vh] min-h-[380px]">
             <MapComparateur features={mapData} dep1={dep1Code} dep2={dep2Code} onSelectDep={handleMapSelect} />
+          </div>
+        </div>
+
+        {/* Panel de sélection rapide sous la carte */}
+        <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-2">
+          {/* Département 1 */}
+          <div className="bg-red-50 border border-red-200 rounded-lg p-2.5 flex items-start gap-2 relative">
+            <span className="w-3 h-3 rounded bg-red-500 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <label className="block text-xs font-semibold text-red-700 mb-1">Département 1</label>
+              <input 
+                type="text" 
+                placeholder="Code ou nom..."
+                value={searchDep1} 
+                onChange={(e) => setSearchDep1(e.target.value)}
+                onFocus={() => setShowSugg1(true)}
+                onBlur={() => setTimeout(() => setShowSugg1(false), 200)}
+                className="w-full border border-red-300 rounded px-2 py-1 text-xs text-red-900 placeholder-red-500 bg-white outline-none focus:border-red-600 focus:ring-1 focus:ring-red-300"
+              />
+              {dep1Code && <p className="text-xs text-red-600 mt-0.5 font-semibold">✓ {depList.find(d => d.code === dep1Code)?.nom || dep1Code}</p>}
+              {showSugg1 && suggDep1.length > 0 && (
+                <div className="absolute top-full left-2.5 right-2.5 mt-1 bg-white border border-red-300 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
+                  {suggDep1.map(d => (
+                    <button
+                      key={d.code}
+                      onClick={() => {
+                        setDep1Code(d.code);
+                        setSearchDep1("");
+                        setShowSugg1(false);
+                      }}
+                      className="w-full text-left px-2 py-1 text-xs hover:bg-red-100 text-red-900 border-b border-red-100 last:border-b-0"
+                    >
+                      <span className="font-semibold">{d.code}</span> – {d.nom}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Département 2 */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-2.5 flex items-start gap-2 relative">
+            <span className="w-3 h-3 rounded bg-blue-500 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <label className="block text-xs font-semibold text-blue-700 mb-1">Département 2</label>
+              <input 
+                type="text" 
+                placeholder="Code ou nom..."
+                value={searchDep2} 
+                onChange={(e) => setSearchDep2(e.target.value)}
+                onFocus={() => setShowSugg2(true)}
+                onBlur={() => setTimeout(() => setShowSugg2(false), 200)}
+                className="w-full border border-blue-300 rounded px-2 py-1 text-xs text-blue-900 placeholder-blue-500 bg-white outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-300"
+              />
+              {dep2Code && <p className="text-xs text-blue-600 mt-0.5 font-semibold">✓ {depList.find(d => d.code === dep2Code)?.nom || dep2Code}</p>}
+              {showSugg2 && suggDep2.length > 0 && (
+                <div className="absolute top-full left-2.5 right-2.5 mt-1 bg-white border border-blue-300 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
+                  {suggDep2.map(d => (
+                    <button
+                      key={d.code}
+                      onClick={() => {
+                        setDep2Code(d.code);
+                        setSearchDep2("");
+                        setShowSugg2(false);
+                      }}
+                      className="w-full text-left px-2 py-1 text-xs hover:bg-blue-100 text-blue-900 border-b border-blue-100 last:border-b-0"
+                    >
+                      <span className="font-semibold">{d.code}</span> – {d.nom}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -179,26 +273,12 @@ const ComparateurPage = () => {
             <div className="text-center py-16 px-8 bg-white rounded-2xl border border-slate-200 shadow-sm max-w-md">
               <h2 className="text-lg font-bold text-slate-700 mb-2">Aucun département sélectionné</h2>
               <p className="text-sm text-slate-500">
-                Cliquez sur un ou deux départements sur la carte, ou utilisez les menus déroulants dans la sidebar.
+                Cliquez sur un ou deux départements sur la carte, ou écrivez le code/nom ci-dessus.
               </p>
             </div>
           </div>
         ) : (
           <div className="flex flex-col gap-6">
-
-          {/* Badges des deux départements sélectionnés */}
-          {dep1Code && dep2Code && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
-                <span className="w-4 h-4 rounded bg-red-500" />
-                <span className="font-bold text-red-700 text-sm">{nom1} ({dep1Code})</span>
-              </div>
-              <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3">
-                <span className="w-4 h-4 rounded bg-blue-500" />
-                <span className="font-bold text-blue-700 text-sm">{nom2} ({dep2Code})</span>
-              </div>
-            </div>
-          )}
 
           {/* 5 bar charts */}
           <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
