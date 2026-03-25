@@ -21,10 +21,20 @@ const ParcSocialPage = () => {
   const [hoveredDep, setHoveredDep] = useState(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [selectedRegion, setSelectedRegion] = useState("Toutes");
+  const [regionSearch, setRegionSearch] = useState("");
   const [sortFluxOrder, setSortFluxOrder] = useState('asc');
   const [ageWeight, setAgeWeight] = useState(33);
   const [energetiqueWeight, setEnergetiqueWeight] = useState(33);
   const [vacanceWeight, setVacanceWeight] = useState(34);
+  const [priceQualityRegion, setPriceQualityRegion] = useState("Toutes");
+  const [priceQualityRegionSearch, setPriceQualityRegionSearch] = useState("");
+  const [passoireSeuil, setPassoireSeuil] = useState(0);
+  const [loyerRange, setLoyerRange] = useState('all');
+  const [attractivityRegion, setAttractivityRegion] = useState("Toutes");
+  const [attractivityRegionSearch, setAttractivityRegionSearch] = useState("");
+  const [marketTension, setMarketTension] = useState(0);
+  const [minBubbleSize, setMinBubbleSize] = useState(0);
+  const [loyerRegionFilter, setLoyerRegionFilter] = useState('all'); // 'all', 'metropole', 'outremer'
 
   useEffect(() => {
     const load = async () => {
@@ -132,8 +142,28 @@ const ParcSocialPage = () => {
 
   // 01 Scatter: Prix vs Qualité (Loyer x Energivores)
   const prixQualiteData = useMemo(() => {
-    // On veut le loyer_moyen sur l'axe X, et le taux_energivores sur l'axe Y
-    const points = latestDataMetropole.filter(d => !isNaN(Number(d.loyer_moyen)) && !isNaN(Number(d.taux_energivores))).map(d => ({
+    let filtered = [...latestDataAll];
+    
+    // Filtre par région
+    if (priceQualityRegion !== "Toutes") {
+      filtered = filtered.filter(d => d.nom_region === priceQualityRegion);
+    }
+    
+    // Filtre par seuil de passoires
+    filtered = filtered.filter(d => Number(d.taux_energivores) >= passoireSeuil);
+    
+    // Filtre par tranche de loyer
+    if (loyerRange !== 'all') {
+      filtered = filtered.filter(d => {
+        const loyer = Number(d.loyer_moyen);
+        if (loyerRange === '<5') return loyer < 5;
+        if (loyerRange === '5-6') return loyer >= 5 && loyer < 6;
+        if (loyerRange === '>6') return loyer >= 6;
+        return true;
+      });
+    }
+    
+    const points = filtered.filter(d => !isNaN(Number(d.loyer_moyen)) && !isNaN(Number(d.taux_energivores))).map(d => ({
       x: Number(d.loyer_moyen),
       y: Number(d.taux_energivores),
       nom: d.nom
@@ -141,14 +171,15 @@ const ParcSocialPage = () => {
 
     return {
       datasets: [{
-        label: 'Départements (Métropole)',
+        label: 'Départements',
         data: points,
         backgroundColor: '#ef4444',
         pointRadius: 4,
-        pointHoverRadius: 7
+        pointHoverRadius: 7,
+        clip: false
       }]
     };
-  }, [latestDataMetropole]);
+  }, [latestDataAll, priceQualityRegion, passoireSeuil, loyerRange])
 
   // 06 Flux : Entrées vs Sorties
   const fluxData = useMemo(() => {
@@ -179,7 +210,7 @@ const ParcSocialPage = () => {
     const sorted = calculated.slice(0, 15);
 
     return {
-      labels: sorted.map(d => d.nom.substring(0,10)+(d.nom.length>10?".":"")),
+      labels: sorted.map(d => d.nom.substring(0,8)+(d.nom.length>8?".":"")),
       datasets: [
         {
           type: 'line',
@@ -220,15 +251,31 @@ const ParcSocialPage = () => {
 
   // Nouveau Scatter : Attractivité vs Coût
   const attractiviteCoutData = useMemo(() => {
-    const valid = latestDataMetropole.filter(d => 
+    let filtered = latestDataAll.filter(d => 
       !isNaN(Number(d.loyer_moyen)) && 
       !isNaN(Number(d.logements_mis_en_location)) &&
       !isNaN(Number(d.nb_logements))
     );
 
-    const maxNb = Math.max(...valid.map(d => Number(d.nb_logements)), 1);
+    // Filtre par région
+    if (attractivityRegion !== "Toutes") {
+      filtered = filtered.filter(d => d.nom_region === attractivityRegion);
+    }
 
-    const points = valid.map(d => {
+    // Filtre par taille de bulle (nombre minimum de logements)
+    filtered = filtered.filter(d => Number(d.nb_logements) >= minBubbleSize * 1000);
+
+    // Filtre par tension de marché (mises en location minimum)
+    if (marketTension > 0) {
+      filtered = filtered.filter(d => {
+        const inLocation = Number(d.logements_mis_en_location);
+        return inLocation >= marketTension * 300; // Convertir slider 0-10 en 0-3000
+      });
+    }
+
+    const maxNb = Math.max(...filtered.map(d => Number(d.nb_logements)), 1);
+
+    const points = filtered.map(d => {
       const nb = Number(d.nb_logements);
       const radius = 4 + (nb / maxNb) * 20; // Rayon dynamique (bulles) entre 4px et 24px
       return {
@@ -248,10 +295,11 @@ const ParcSocialPage = () => {
         borderColor: '#4f46e5',
         borderWidth: 1,
         pointRadius: points.map(p => p.r),
-        pointHoverRadius: points.map(p => p.r + 2)
+        pointHoverRadius: points.map(p => p.r + 2),
+        clip: false
       }]
     };
-  }, [latestDataMetropole]);
+  }, [latestDataAll, attractivityRegion, minBubbleSize, marketTension]);
 
   // 02 Bar horizontal: Loyer par région
   const loyerRegionData = useMemo(() => {
@@ -261,6 +309,13 @@ const ParcSocialPage = () => {
       const r = d.nom_region;
       const l = Number(d.loyer_moyen);
       if(!r || isNaN(l)) return;
+      
+      // Filtre Outre-Mer vs Métropole basé sur le code département
+      const code = String(d.code || '');
+      const isOutreMer = code.startsWith('97') || code.startsWith('98');
+      if (loyerRegionFilter === 'metropole' && isOutreMer) return;
+      if (loyerRegionFilter === 'outremer' && !isOutreMer) return;
+      
       if(!grouped[r]) grouped[r] = {sum:0, cnt:0};
       grouped[r].sum += l; grouped[r].cnt++;
       totalRent += l; totalCnt++;
@@ -296,14 +351,16 @@ const ParcSocialPage = () => {
         }
       ]
     };
-  }, [latestDataAll]);
+  }, [latestDataAll, loyerRegionFilter]);
 
   return (
     <div className="flex w-full items-start bg-transparent min-h-screen flex-col xl:flex-row">
       <SidebarParcSocial 
         regions={regionsList} 
         selectedRegion={selectedRegion} 
-        setSelectedRegion={setSelectedRegion} 
+        setSelectedRegion={setSelectedRegion}
+        regionSearch={regionSearch}
+        setRegionSearch={setRegionSearch}
         sortFluxOrder={sortFluxOrder}
         setSortFluxOrder={setSortFluxOrder}
         ageWeight={ageWeight}
@@ -312,6 +369,24 @@ const ParcSocialPage = () => {
         setEnergetiqueWeight={setEnergetiqueWeight}
         vacanceWeight={vacanceWeight}
         setVacanceWeight={setVacanceWeight}
+        priceQualityRegion={priceQualityRegion}
+        setPriceQualityRegion={setPriceQualityRegion}
+        priceQualityRegionSearch={priceQualityRegionSearch}
+        setPriceQualityRegionSearch={setPriceQualityRegionSearch}
+        passoireSeuil={passoireSeuil}
+        setPassoireSeuil={setPassoireSeuil}
+        loyerRange={loyerRange}
+        setLoyerRange={setLoyerRange}
+        attractivityRegion={attractivityRegion}
+        setAttractivityRegion={setAttractivityRegion}
+        attractivityRegionSearch={attractivityRegionSearch}
+        setAttractivityRegionSearch={setAttractivityRegionSearch}
+        marketTension={marketTension}
+        setMarketTension={setMarketTension}
+        minBubbleSize={minBubbleSize}
+        setMinBubbleSize={setMinBubbleSize}
+        loyerRegionFilter={loyerRegionFilter}
+        setLoyerRegionFilter={setLoyerRegionFilter}
       />
       <div className="flex-1 ml-0 xl:ml-[20%] flex flex-col gap-8 p-6 xl:p-8 xl:pt-0">
         {/* ROW 1 : CHOROPLETH MAP */}
@@ -388,8 +463,18 @@ const ParcSocialPage = () => {
                     tooltip: { callbacks: { label: c => `${c.raw.nom}: Loyer ${c.raw.x}€/m² | Énergivores ${c.raw.y}%` } } 
                   },
                   scales: { 
-                    x: { title: { display: true, text: 'Loyer moyen (€/m²)', font: { size: 11, weight: '600' } } }, 
-                    y: { title: { display: true, text: 'Passoires thermiques (%)', font: { size: 11, weight: '600' } } } 
+                    x: { 
+                      min: 4.5,
+                      max: 8,
+                      clip: false,
+                      title: { display: true, text: 'Loyer moyen (€/m²)', font: { size: 11, weight: '600' } } 
+                    }, 
+                    y: { 
+                      min: 0,
+                      max: 60,
+                      clip: false,
+                      title: { display: true, text: 'Passoires thermiques (%)', font: { size: 11, weight: '600' } } 
+                    } 
                   }
                 }} 
               />
@@ -435,8 +520,18 @@ const ParcSocialPage = () => {
                      legend: { display: false }
                    },
                    scales: {
-                     x: { title: { display: true, text: 'Loyer moyen (€/m²)', font: { size: 10 } } },
-                     y: { title: { display: true, text: 'Mises en location', font: { size: 10 } } }
+                     x: { 
+                       min: 4.5,
+                       max: 8,
+                       clip: false,
+                       title: { display: true, text: 'Loyer moyen (€/m²)', font: { size: 10 } } 
+                     },
+                     y: { 
+                       min: 0,
+                       max: 3500,
+                       clip: false,
+                       title: { display: true, text: 'Mises en location', font: { size: 10 } } 
+                     }
                    }
                   }} 
                />
