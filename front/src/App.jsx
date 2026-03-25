@@ -6,7 +6,7 @@ import {
   Routes,
   useLocation,
 } from "react-router-dom";
-import CustomPage from "./pages/CustomPage";
+import ComparateurPage from "./pages/ComparateurPage";
 import HomePage from "./pages/HomePage";
 import LogementPage from "./pages/LogementPage";
 import ParcSocialPage from "./pages/ParcSocialPage";
@@ -16,6 +16,7 @@ import TestPage from "./pages/TestPage";
 function App() {
   const [menuMobileOuvert, setMenuMobileOuvert] = useState(false);
   const location = useLocation();
+  const estAccueil = location.pathname === "/";
 
   const lienNav = ({ isActive }) =>
     `py-1 font-medium transition-colors duration-200 text-xs sm:text-sm xl:text-base ${
@@ -51,10 +52,10 @@ function App() {
             Population
           </NavLink>
           <NavLink to="/test" className={lienNav}>
-            Test (Brouillon)
+            Création
           </NavLink>
-          <NavLink to="/custom" className={lienNav}>
-            Comparateur
+          <NavLink to="/comparateur" className={lienNav}>
+            Créer vos comparaisons
           </NavLink>
         </nav>
       </header>
@@ -125,25 +126,25 @@ function App() {
               Test (Brouillon)
             </NavLink>
             <NavLink
-              to="/custom"
+              to="/comparateur"
               onClick={() => setMenuMobileOuvert(false)}
-              className={`${lienNavMobile({ isActive: location.pathname === "/custom" })} mobile-menu-item`}
+              className={`${lienNavMobile({ isActive: location.pathname === "/comparateur" })} mobile-menu-item`}
               style={{ animationDelay: "220ms" }}
             >
-              Comparateur
+              Créer vos comparaisons
             </NavLink>
           </div>
         </nav>
       )}
 
-      <main className="flex-1 w-full h-full pb-8">
+      <main className={`flex-1 w-full h-full ${estAccueil ? "pb-0" : "pb-8"}`}>
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/test" element={<TestPage />} />
           <Route path="/parc-social" element={<ParcSocialPage />} />
           <Route path="/logement" element={<LogementPage />} />
           <Route path="/population" element={<PopulationPage />} />
-          <Route path="/custom" element={<CustomPage />} />
+          <Route path="/comparateur" element={<ComparateurPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
