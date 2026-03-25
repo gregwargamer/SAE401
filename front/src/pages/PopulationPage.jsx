@@ -342,7 +342,7 @@ const PopulationPage = () => {
         depsList={latestDataAll.map(d => ({code: d.code, nom: d.nom})).sort((a,b) => a.nom.localeCompare(b.nom))}
       />
 
-      <div className="flex-1 flex flex-col gap-8 xl:p-8 xl:pt-0 pt-[20px] p-4 xl:ml-[22%] ml-0">
+      <div className="flex-1 flex flex-col gap-8 xl:p-8 xl:pt-0 pt-[20px] p-4 xl:ml-[19%] ml-0">
         
         {/* ROW 1 : BUBBLE CHART */}
         <div className="w-full bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden relative">
