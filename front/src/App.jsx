@@ -19,17 +19,17 @@ function App() {
   const estAccueil = location.pathname === "/";
 
   const lienNav = ({ isActive }) =>
-    `py-1 font-medium transition-colors duration-200 text-xs sm:text-sm xl:text-base ${
+    `py-1 font-medium transition-all duration-200 text-xs sm:text-sm xl:text-base pb-1 ${
       isActive
-        ? "text-[#1f2a2e] font-bold"
-        : "text-[#4a5256] hover:text-[#1f2a2e]"
+        ? "text-[#1f2a2e] font-bold border-b-2 border-[#1f2a2e]"
+        : "text-[#4a5256] hover:text-[#1f2a2e] border-b-2 border-transparent hover:border-b-2 hover:border-[#1f2a2e]"
     }`;
 
   const lienNavMobile = ({ isActive }) =>
-    `block w-full rounded-xl px-4 py-2.5 text-lg font-semibold transition-colors duration-200 ${
+    `block w-full rounded-xl px-4 py-2.5 text-lg font-semibold transition-all duration-200 border-l-4 ${
       isActive
-        ? "bg-slate-100 text-[#1f2a2e]"
-        : "text-[#2f3b40] hover:bg-slate-100"
+        ? "bg-slate-100 text-[#1f2a2e] border-l-[#1f2a2e]"
+        : "text-[#2f3b40] hover:bg-slate-100 border-l-transparent"
     }`;
 
   return (
