@@ -45,16 +45,20 @@ const HomePage = () => {
       </div>
 
       <div className="relative sm:absolute z-20 sm:bottom-4 left-0 right-0 px-4 pt-8 sm:pt-0 pb-10 sm:pb-0 flex flex-col items-center justify-start text-center">
-        <h2 className="text-xl sm:text-2xl font-extrabold text-slate-800 mb-5 sm:mb-3">
+        <h2
+          className="text-xl sm:text-2xl font-extrabold text-slate-800 mb-5 sm:mb-3 home-hero-enter"
+          style={{ animationDelay: "260ms" }}
+        >
           Explorer les pages existantes
         </h2>
 
         <div className="w-[92%] sm:w-[95%] max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
-          {pagesExistantes.map((page) => (
+          {pagesExistantes.map((page, index) => (
             <Link
               key={page.to}
               to={page.to}
-              className="w-full inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-[#1f2a2e] text-white font-semibold border border-white/20 hover:bg-[#26343a] transition-colors duration-200"
+              className="w-full inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-[#1f2a2e] text-white font-semibold border border-white/20 hover:bg-[#26343a] transition-colors duration-200 home-hero-enter"
+              style={{ animationDelay: `${300 + index * 50}ms` }}
             >
               {page.label}
             </Link>
