@@ -16,6 +16,7 @@ import TestPage from "./pages/TestPage";
 function App() {
   const [menuMobileOuvert, setMenuMobileOuvert] = useState(false);
   const location = useLocation();
+  const estAccueil = location.pathname === "/";
 
   const lienNav = ({ isActive }) =>
     `py-1 font-medium transition-colors duration-200 text-xs sm:text-sm xl:text-base ${
@@ -51,7 +52,7 @@ function App() {
             Population
           </NavLink>
           <NavLink to="/test" className={lienNav}>
-            Test (Brouillon)
+            Création
           </NavLink>
           <NavLink to="/comparateur" className={lienNav}>
             Créer vos comparaisons
@@ -136,7 +137,7 @@ function App() {
         </nav>
       )}
 
-      <main className="flex-1 w-full h-full pb-8">
+      <main className={`flex-1 w-full h-full ${estAccueil ? "pb-0" : "pb-8"}`}>
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/test" element={<TestPage />} />
