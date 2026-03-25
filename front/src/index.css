@@ -55,6 +55,22 @@ body {
   animation: mobileItemIn 260ms ease-out forwards;
 }
 
+@keyframes homeHeroEnter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.home-hero-enter {
+  opacity: 0;
+  animation: homeHeroEnter 480ms ease-out forwards;
+}
+
 @media (max-width: 639px) {
   html {
     font-size: 17px;
