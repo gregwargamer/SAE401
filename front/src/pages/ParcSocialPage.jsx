@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { apiClient } from "../service/mainapi";
+import { apiClient, fetchGeoData } from "../service/mainapi";
 import {
   Chart as ChartJS, CategoryScale, LinearScale, LogarithmicScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend
 } from "chart.js";
@@ -25,12 +25,12 @@ const ParcSocialPage = () => {
 
   useEffect(() => {
     const load = async () => {
-      const [stats, geo] = await Promise.all([
+      const [stats, geoResult] = await Promise.all([
         apiClient.get("/all"),
-        apiClient.get("/geo")
+        fetchGeoData()
       ]);
       setRawData(stats.data || []);
-      setGeoData(geo.data || []);
+      setGeoData(geoResult);
     };
     load();
   }, []);

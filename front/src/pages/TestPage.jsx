@@ -1,5 +1,5 @@
-﻿import { useEffect, useMemo, useState } from "react";
-import { apiClient } from "../service/mainapi";
+import { useEffect, useMemo, useState } from "react";
+import { apiClient, fetchGeoData } from "../service/mainapi";
 import MapDepartements from "../components/MapDepartements";
 
 // Importations recommandées pour Chart.js (déjà installé dans votre package.json)
@@ -20,7 +20,7 @@ const TestPage = () => {
     // 1. On lance le téléchargement
     const load = async () => {
       // on dmd les coo all et geo 
-      const [geo, stats] = await Promise.all([apiClient.get("/geo"), apiClient.get("/all")]);
+      const [geoResult, stats] = await Promise.all([fetchGeoData(), apiClient.get("/all")]);
       
       // l'anné la plus recente poru etre a jour 
       const statsList = stats.data || [];
@@ -28,7 +28,7 @@ const TestPage = () => {
       const statsAjour = statsList.filter(s => Number(s.annee) === anneeMax);
 
       // ici c pour coller les chiffre sur le geo et sauvegarder
-      setData((geo.data || []).map(g => {
+      setData(geoResult.map(g => {
         const sesChiffres = statsAjour.find(s => s.code_departement === g.code) || {};
         return { ...g, ...sesChiffres, nom: g.nom, code: g.code };
       }));
