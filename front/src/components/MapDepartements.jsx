@@ -1,14 +1,30 @@
 ﻿import { useMemo, useRef, useState } from "react";
 import { ComposableMap, Geographies, Geography } from "react-simple-maps";
 
-// Couleurs pour la legendes
-const LEGENDE = [
-  { max: 10, color: "#dbeafe", label: "5% - 10%" },
-  { max: 15, color: "#93c5fd", label: "10% - 15%" },
-  { max: 20, color: "#60a5fa", label: "15% - 20%" },
-  { max: 25, color: "#2563eb", label: "20% - 25%" },
-  { max: 30, color: "#1e3a8a", label: "25% - 37%" },
-];
+// Couleurs pour la légende - différentes selon la variable
+const LEGENDES = {
+  taux_logements_sociaux: [
+    { max: 10, color: "#dbeafe", label: "5% - 10%" },
+    { max: 15, color: "#93c5fd", label: "10% - 15%" },
+    { max: 20, color: "#60a5fa", label: "15% - 20%" },
+    { max: 25, color: "#2563eb", label: "20% - 25%" },
+    { max: 30, color: "#1e3a8a", label: "25% - 37%" },
+  ],
+  taux_logements_vacants: [
+    { max: 5, color: "#dbeafe", label: "0% - 5%" },
+    { max: 8, color: "#93c5fd", label: "5% - 8%" },
+    { max: 11, color: "#60a5fa", label: "8% - 11%" },
+    { max: 14, color: "#2563eb", label: "11% - 14%" },
+    { max: 16, color: "#1e3a8a", label: "14% - 16%" },
+  ],
+  taux_energivores: [
+    { max: 10, color: "#fecaca", label: "0% - 10%" },
+    { max: 15, color: "#f87171", label: "10% - 15%" },
+    { max: 20, color: "#ef4444", label: "15% - 20%" },
+    { max: 25, color: "#dc2626", label: "20% - 25%" },
+    { max: 30, color: "#991b1b", label: "25% - 30%" },
+  ],
+};
 
 const VARIABLE_CONFIG = {
   taux_logements_sociaux: { 
@@ -29,9 +45,10 @@ const VARIABLE_CONFIG = {
 };
 
 // Peindre la zone en fonction du chiffre du taux
-const getCouleur = (taux) => {
+const getCouleur = (taux, variable) => {
   if (!Number.isFinite(Number(taux))) return "#e5e7eb";
-  return (LEGENDE.find(bin => Number(taux) <= bin.max) || LEGENDE[4]).color;
+  const legende = LEGENDES[variable] || LEGENDES.taux_logements_sociaux;
+  return (legende.find(bin => Number(taux) <= bin.max) || legende[legende.length - 1]).color;
 };
 
 // Formate en pourcentage
@@ -65,7 +82,7 @@ const MapDepartements = ({ features, selectedVariable = 'taux_logements_sociaux'
             <Geography
               key={geo.rsmKey}
               geography={geo}
-              fill={getCouleur(geo.properties?.[varConfig.key])}
+              fill={getCouleur(geo.properties?.[varConfig.key], selectedVariable)}
               stroke="#475569" strokeWidth={0.8}
               style={{ default: { outline: "none" }, hover: { outline: "none", opacity: 0.8 }, pressed: { outline: "none" } }}
               onMouseEnter={(e) => { setSurvol(geo.properties); bougerSouris(e); }}
@@ -86,24 +103,23 @@ const MapDepartements = ({ features, selectedVariable = 'taux_logements_sociaux'
           className="absolute z-20 pointer-events-none bg-white border border-slate-300 rounded-lg p-2 text-xs shadow-lg"
           style={{ left: souris.x + 15, top: Math.max(souris.y - 20, 8) }}
         >
-          <div className="font-bold mb-1">
+          <div className="font-bold mb-2">
             {survol.nom} {survol.code ? `(${survol.code})` : ""}
           </div>
-          <div>Logements sociaux: {pourcent(survol.taux_logements_sociaux)}</div>
-          <div>Vacance: {pourcent(survol.taux_logements_vacants)}</div>
-          <div>Passoires: {pourcent(survol.taux_energivores)}</div>
-          <div className="border-t border-slate-200 mt-1 pt-1 font-semibold">
+          <div className="font-semibold text-slate-800">
             {varConfig.label}: {pourcent(survol[varConfig.key])}
           </div>
-          <div className="text-xs text-slate-500 border-t border-slate-200 mt-1 pt-1">
-            Chômage: {pourcent(survol.taux_chomage)} | Pauvreté: {pourcent(survol.taux_pauvrete)}
+          <div className="text-slate-600 mt-1">
+            {selectedVariable !== 'taux_logements_sociaux' && <div>Logements sociaux: {pourcent(survol.taux_logements_sociaux)}</div>}
+            {selectedVariable !== 'taux_logements_vacants' && <div>Vacance: {pourcent(survol.taux_logements_vacants)}</div>}
+            {selectedVariable !== 'taux_energivores' && <div>Passoires: {pourcent(survol.taux_energivores)}</div>}
           </div>
         </div>
       )}
 
       <div className="absolute left-4 bottom-4 bg-white/95 border border-slate-300 rounded-xl p-3 shadow-lg">
         <div className="text-xs font-bold text-gray-800 mb-2">{varConfig.label}</div>
-        {LEGENDE.map((bin) => (
+        {LEGENDES[selectedVariable].map((bin) => (
           <div key={bin.label} className="flex items-center gap-2 text-xs mb-1">
             <span className="w-3.5 h-3.5 rounded-[3px] border border-black/15" style={{ background: bin.color }} />
             <span>{bin.label}</span>
