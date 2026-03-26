@@ -8,7 +8,11 @@ Application web de visualisation de statistiques départementales françaises.
 - **Frontend** : React + Vite + Tailwind CSS + Chart.js — dossier `front/`
 - **Base de données** : MySQL (hébergée sur AlwaysData)
 
-## Lancer le projet
+## Prérequis pour lancer le projet
+
+Symfony CLI doit être installé — [symfony.com/doc/current/setup.html](https://symfony.com/doc/current/setup.html)
+
+Node.js doit être installé — [nodejs.org](https://nodejs.org/en/download)
 
 ### Backend (Symfony)
 
@@ -18,12 +22,18 @@ composer install
 symfony server:start
 ```
 
-### Frontend (React)
+### puis lancement du frontend (React)
 
 ```bash
 cd front
-npm install
+npm install --legacy-peer-deps
 npm run dev
+```
+
+### Ou lancement en une commande
+
+```bash
+(cd front && npm install --legacy-peer-deps && npm run dev) & (cd back && composer install && php -S 127.0.0.1:8000 -t public/)
 ```
 
 ## Données
