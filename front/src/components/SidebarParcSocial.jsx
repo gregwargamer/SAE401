@@ -126,40 +126,40 @@ const SidebarParcSocial = ({
           
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center gap-2">
-              <label className="text-xs font-semibold text-slate-700 w-12">Âge</label>
+              <label className="text-xs font-semibold text-slate-700 w-14">Age</label>
               <input 
                 type="range"
                 min="0"
                 max="100"
                 value={ageWeight}
                 onChange={(e) => handleAgeChange(e.target.value)}
-                className="flex-1 h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-slate-700"
+                className="flex-1 h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer"
               />
               <span className="text-xs font-bold text-slate-800 bg-slate-100 px-1.5 py-0 rounded w-8 text-center">{ageWeight}%</span>
             </div>
 
             <div className="flex items-center gap-2">
-              <label className="text-xs font-semibold text-slate-700 w-12">Énerg.</label>
+              <label className="text-xs font-semibold text-slate-700 w-14">Energ.</label>
               <input 
                 type="range"
                 min="0"
                 max="100"
                 value={energetiqueWeight}
                 onChange={(e) => handleEnergetiqueChange(e.target.value)}
-                className="flex-1 h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-slate-700"
+                className="flex-1 h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer"
               />
               <span className="text-xs font-bold text-slate-800 bg-slate-100 px-1.5 py-0 rounded w-8 text-center">{energetiqueWeight}%</span>
             </div>
 
             <div className="flex items-center gap-2">
-              <label className="text-xs font-semibold text-slate-700 w-12">Vacance</label>
+              <label className="text-xs font-semibold text-slate-700 w-14">Vacance</label>
               <input 
                 type="range"
                 min="0"
                 max="100"
                 value={vacanceWeight}
                 onChange={(e) => handleVacanceChange(e.target.value)}
-                className="flex-1 h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-slate-700"
+                className="flex-1 h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer"
               />
               <span className="text-xs font-bold text-slate-800 bg-slate-100 px-1.5 py-0 rounded w-8 text-center">{vacanceWeight}%</span>
             </div>
@@ -224,17 +224,17 @@ const SidebarParcSocial = ({
             </div>
             
             <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-slate-600">Passoires</label>
-              <span className="text-xs font-bold text-red-600 bg-red-50 px-1.5 py-0 rounded">{passoireSeuil}%</span>
+              <label className="text-xs font-semibold text-slate-600 w-16">Passoires</label>
+              <input 
+                type="range"
+                min="0"
+                max="100"
+                value={passoireSeuil}
+                onChange={(e) => setPassoireSeuil(parseInt(e.target.value))}
+                className="flex-1 h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-red-500"
+              />
+              <span className="text-xs font-bold text-red-600 bg-red-50 px-1.5 py-0 rounded w-10 text-center">{passoireSeuil}%</span>
             </div>
-            <input 
-              type="range"
-              min="0"
-              max="100"
-              value={passoireSeuil}
-              onChange={(e) => setPassoireSeuil(parseInt(e.target.value))}
-              className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-red-500"
-            />
             
             <label className="text-xs font-semibold text-slate-600 mt-0.5">Loyer</label>
             <div className="flex gap-1">
@@ -356,33 +356,33 @@ const SidebarParcSocial = ({
               )}
             </div>
 
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-slate-600">Tension</label>
-              <span className="text-xs font-bold text-blue-600 bg-blue-50 px-1.5 py-0 rounded">{(marketTension * 300).toFixed(0)}</span>
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-semibold text-slate-600 w-14">Passoires</label>
+              <input 
+                type="range"
+                min="0"
+                max="10"
+                step="0.5"
+                value={marketTension}
+                onChange={(e) => setMarketTension(Number(e.target.value))}
+                className="flex-1 h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
+              />
+              <span className="text-xs font-bold text-blue-600 bg-blue-50 px-1.5 py-0 rounded w-12 text-center">{(marketTension * 300).toFixed(0)}</span>
             </div>
-            <input 
-              type="range"
-              min="0"
-              max="10"
-              step="0.5"
-              value={marketTension}
-              onChange={(e) => setMarketTension(Number(e.target.value))}
-              className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
-            />
 
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-slate-600">Parc</label>
-              <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0 rounded">{minBubbleSize}k</span>
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-semibold text-slate-600 w-14">Parc</label>
+              <input 
+                type="range"
+                min="0"
+                max="1000"
+                step="10"
+                value={minBubbleSize}
+                onChange={(e) => setMinBubbleSize(Number(e.target.value))}
+                className="flex-1 h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+              />
+              <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0 rounded w-10 text-center">{minBubbleSize}k</span>
             </div>
-            <input 
-              type="range"
-              min="0"
-              max="1000"
-              step="10"
-              value={minBubbleSize}
-              onChange={(e) => setMinBubbleSize(Number(e.target.value))}
-              className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-500"
-            />
           </div>
         </div>
 

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { apiClient } from "../service/mainapi";
 import {
   Chart as ChartJS, CategoryScale, LinearScale, LogarithmicScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend
@@ -382,7 +383,7 @@ const LogementPage = () => {
         setMaxDensity={setMaxDensity}
       />
       
-      <div className="flex-1 w-full lg:ml-[240px] xl:ml-[20%] flex flex-col gap-8 p-4 lg:p-8 lg:pt-0 pb-10">
+      <div className="flex-1 w-full lg:ml-[240px] xl:ml-[20%] flex flex-col gap-8 p-4 lg:p-8 lg:pt-0 lg:pb-0 pb-0">
         {/* ROW 1 : CARTE FULL WIDTH */}
         <div className="w-full bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden relative">
           <div className="w-full h-[80vh] min-h-[450px]">
@@ -449,6 +450,13 @@ const LogementPage = () => {
           </div>
         </div>
 
+        {/* CTA - Créer son propre graphique */}
+        <div className="w-full py-1 text-center border-t border-slate-200">
+          <p className="text-slate-600 text-sm mb-1">Vous ne trouvez pas ce que vous cherchez ?</p>
+          <Link to="/test" className="inline-block text-slate-900 font-semibold hover:underline transition-all text-base">
+            Créez votre propre graphique
+          </Link>
+        </div>
       </div>
     </div>
   );

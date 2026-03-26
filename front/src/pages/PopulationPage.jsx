@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { apiClient } from "../service/mainapi";
 import {
   Chart as ChartJS, CategoryScale, LinearScale, LogarithmicScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend, RadialLinearScale, Filler
@@ -14,7 +15,31 @@ const PopulationPage = () => {
   const [sansGers, setSansGers] = useState(false);
   const [sortJeunes, setSortJeunes] = useState('asc');
   const [sortPauvrete, setSortPauvrete] = useState('desc');
-  const [selectedRadarDept, setSelectedRadarDept] = useState('01');
+  // Par défaut, aucun département sélectionné pour le radar
+  const [selectedRadarDepts, setSelectedRadarDepts] = useState([]);
+  const [selectedRadarRegion, setSelectedRadarRegion] = useState('');
+  const [showRadarRegionDropdown, setShowRadarRegionDropdown] = useState(false);
+  const [radarSearchTerm, setRadarSearchTerm] = useState('');
+  
+  // Filtres régionaux par graphe
+  const [selectedRegionBubble, setSelectedRegionBubble] = useState('');
+  const [searchRegionBubble, setSearchRegionBubble] = useState('');
+  const [showRegionSuggBubble, setShowRegionSuggBubble] = useState(false);
+  
+  const [selectedRegionNatMig, setSelectedRegionNatMig] = useState('');
+  const [searchRegionNatMig, setSearchRegionNatMig] = useState('');
+  const [showRegionSuggNatMig, setShowRegionSuggNatMig] = useState(false);
+  
+  const [selectedRegionPauvrete, setSelectedRegionPauvrete] = useState('');
+  const [searchRegionPauvrete, setSearchRegionPauvrete] = useState('');
+  const [showRegionSuggPauvrete, setShowRegionSuggPauvrete] = useState(false);
+  
+  const [selectedRegionAges, setSelectedRegionAges] = useState('');
+  const [searchRegionAges, setSearchRegionAges] = useState('');
+  const [showRegionSuggAges, setShowRegionSuggAges] = useState(false);
+  const [sortNatMig, setSortNatMig] = useState('desc');
+  const [densiteFilter, setDensiteFilter] = useState(0);
+  const [sortDensite, setSortDensite] = useState('desc');
 
   useEffect(() => {
     const load = async () => {
@@ -42,9 +67,93 @@ const PopulationPage = () => {
     return latestDataAll.filter(d => isMetropole(d.code));
   }, [latestDataAll]);
 
+  /* Liste des régions uniques */
+  const regionsList = useMemo(() => {
+    const regions = [...new Set(latestDataMetropole.map(d => d.nom_region).filter(Boolean))].sort();
+    return regions;
+  }, [latestDataMetropole]);
+
+  /* Suggestions pour Bubble Chart */
+  const regionSuggestionsBubble = useMemo(() => {
+    if (!searchRegionBubble.trim()) return regionsList;
+    return regionsList.filter(r => r.toLowerCase().includes(searchRegionBubble.toLowerCase()));
+  }, [regionsList, searchRegionBubble]);
+
+  const dataByRegionBubble = useMemo(() => {
+    if (!selectedRegionBubble) return latestDataMetropole;
+    return latestDataMetropole.filter(d => d.nom_region === selectedRegionBubble);
+  }, [latestDataMetropole, selectedRegionBubble]);
+
+  /* Suggestions pour Bar NatMig */
+  const regionSuggestionsNatMig = useMemo(() => {
+    if (!searchRegionNatMig.trim()) return regionsList;
+    return regionsList.filter(r => r.toLowerCase().includes(searchRegionNatMig.toLowerCase()));
+  }, [regionsList, searchRegionNatMig]);
+
+  const dataByRegionNatMig = useMemo(() => {
+    if (!selectedRegionNatMig) return latestDataMetropole;
+    return latestDataMetropole.filter(d => d.nom_region === selectedRegionNatMig);
+  }, [latestDataMetropole, selectedRegionNatMig]);
+
+  /* Suggestions pour Bar Pauvreté */
+  const regionSuggestionsPauvrete = useMemo(() => {
+    if (!searchRegionPauvrete.trim()) return regionsList;
+    return regionsList.filter(r => r.toLowerCase().includes(searchRegionPauvrete.toLowerCase()));
+  }, [regionsList, searchRegionPauvrete]);
+
+  const dataByRegionPauvrete = useMemo(() => {
+    if (!selectedRegionPauvrete) return latestDataMetropole;
+    return latestDataMetropole.filter(d => d.nom_region === selectedRegionPauvrete);
+  }, [latestDataMetropole, selectedRegionPauvrete]);
+
+  /* Suggestions pour Bar Ages */
+  const regionSuggestionsAges = useMemo(() => {
+    if (!searchRegionAges.trim()) return regionsList;
+    return regionsList.filter(r => r.toLowerCase().includes(searchRegionAges.toLowerCase()));
+  }, [regionsList, searchRegionAges]);
+
+  const dataByRegionAges = useMemo(() => {
+    if (!selectedRegionAges) return latestDataMetropole;
+    return latestDataMetropole.filter(d => d.nom_region === selectedRegionAges);
+  }, [latestDataMetropole, selectedRegionAges]);
+
+  // Calcul des min/max fixes pour les axes (basés sur TOUTES les données)
+  const axisRanges = useMemo(() => {
+    const validBubble = latestDataMetropole.filter(d => !isNaN(Number(d.taux_chomage)) && !isNaN(Number(d.taux_pauvrete)));
+    const validPauvrete = latestDataMetropole.filter(d => !isNaN(Number(d.taux_pauvrete)) && !isNaN(Number(d.densite)));
+    const validNatMig = latestDataMetropole.filter(d => !isNaN(Number(d.contribution_solde_naturel)) && !isNaN(Number(d.contribution_solde_migratoire)));
+    const validAges = latestDataMetropole.filter(d => !isNaN(Number(d.pct_moins_20ans)) && !isNaN(Number(d.pct_plus_60ans)));
+    
+    const natMigValues = validNatMig.flatMap(d => [Number(d.contribution_solde_naturel), Number(d.contribution_solde_migratoire)]);
+    const agesValues = validAges.flatMap(d => [Number(d.pct_moins_20ans), Number(d.pct_plus_60ans)]);
+    
+    return {
+      chomage: {
+        min: Math.min(...validBubble.map(d => Number(d.taux_chomage))),
+        max: Math.max(...validBubble.map(d => Number(d.taux_chomage)))
+      },
+      pauvrete: {
+        min: Math.min(...validPauvrete.map(d => Number(d.taux_pauvrete))),
+        max: Math.max(...validPauvrete.map(d => Number(d.taux_pauvrete)))
+      },
+      densite: {
+        min: Math.min(...validPauvrete.map(d => Number(d.densite))),
+        max: Math.max(...validPauvrete.map(d => Number(d.densite)))
+      },
+      natMig: {
+        min: Math.min(...natMigValues),
+        max: Math.max(...natMigValues)
+      },
+      ages: {
+        min: Math.min(...agesValues),
+        max: Math.max(...agesValues)
+      }
+    };
+  }, [latestDataMetropole]);
+
   // 1. BUBBLE CHART
   const bubbleData = useMemo(() => {
-    const points = latestDataMetropole
+    const points = dataByRegionBubble
       .filter(d => !isNaN(Number(d.taux_chomage)) && !isNaN(Number(d.taux_pauvrete)) && !isNaN(Number(d.taux_logements_sociaux)))
       .filter(d => !sansGers || String(d.code) !== "32")
       .map(d => ({
@@ -66,24 +175,61 @@ const PopulationPage = () => {
         hoverBackgroundColor: 'rgba(2, 132, 199, 0.8)'
       }]
     };
-  }, [latestDataMetropole, sansGers]);
+  }, [dataByRegionBubble, sansGers, axisRanges]);
 
-  const bubbleOptions = {
+  const bubbleOptions = useMemo(() => ({
     maintainAspectRatio: false,
+    responsive: true,
+    interaction: {
+      intersect: false,
+      mode: 'index'
+    },
     plugins: {
       legend: { display: false },
       tooltip: {
+        enabled: true,
+        displayColors: false,
+        padding: 12,
+        backgroundColor: 'rgba(0, 0, 0, 0.9)',
+        titleFont: { size: 14, weight: 'bold' },
+        bodyFont: { size: 13 },
         callbacks: {
+          title: () => '',
           label: (ctx) => `${ctx.raw.nom}: Chômage ${ctx.raw.x}% | Pauvreté ${ctx.raw.y}% | Sociaux ${ctx.raw.realR}%`
         }
       }
+    },
+    elements: {
+      point: {
+        borderWidth: 1
+      }
+    },
+    scales: {
+      x: {
+        title: {
+          display: true,
+          text: 'Taux de chômage (%)',
+          font: { size: 12, weight: 'bold' }
+        },
+        ticks: { font: { size: 11 } },
+        grid: { drawOnChartArea: true }
+      },
+      y: {
+        title: {
+          display: true,
+          text: 'Taux de pauvreté (%)',
+          font: { size: 12, weight: 'bold' }
+        },
+        ticks: { font: { size: 11 } },
+        grid: { drawOnChartArea: true }
+      }
     }
-  };
+  }), []);
 
   // 2. BAR GROUPÉ : Solde naturel vs migratoire (sans DOM)
   const barNatMigData = useMemo(() => {
     const grouped = {};
-    latestDataMetropole.forEach(d => {
+    dataByRegionNatMig.forEach(d => {
       let r = d.nom_region;
       if (!r) return;
       
@@ -95,16 +241,20 @@ const PopulationPage = () => {
       }
     });
 
-    const regionsData = Object.keys(grouped).map(r => {
+    let regionsData = Object.keys(grouped).map(r => {
       const g = grouped[r];
       const natAvg = g.cnt > 0 ? g.nat.reduce((a, b) => a + b, 0) / g.cnt : 0;
       const migAvg = g.cnt > 0 ? g.mig.reduce((a, b) => a + b, 0) / g.cnt : 0;
       return { r, natAvg, migAvg, total: natAvg + migAvg };
     });
 
-    // Score du plus haut au plus bas total
+    // Trier selon la sélection
     regionsData.sort((a, b) => {
-      return b.total - a.total;
+      if (sortNatMig === 'asc') {
+        return a.total - b.total;
+      } else {
+        return b.total - a.total;
+      }
     });
 
     const natAvgArr = regionsData.map(d => d.natAvg);
@@ -136,7 +286,7 @@ const PopulationPage = () => {
         }
       ]
     };
-  }, [latestDataMetropole]);
+  }, [dataByRegionNatMig, sortNatMig]);
 
   const natMigPlugin = {
     id: 'scoreNatMig',
@@ -177,7 +327,7 @@ const PopulationPage = () => {
     }
   };
 
-  const barNatMigOptions = {
+  const barNatMigOptions = useMemo(() => ({
     maintainAspectRatio: false,
     plugins: {
       legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
@@ -186,15 +336,29 @@ const PopulationPage = () => {
     responsive: true,
     scales: {
       x: { title: { display: true, text: 'Régions' } },
-      y: { title: { display: true, text: 'Contribution / 1000 hab' } }
+      y: { 
+        min: axisRanges.natMig.min - 2,
+        max: axisRanges.natMig.max + 2,
+        title: { display: true, text: 'Contribution / 1000 hab' } 
+      }
     }
-  };
+  }), [axisRanges]);
 
   // 3. BAR + LINE : Pauvreté et Densité
   const barPauvreteDensiteData = useMemo(() => {
-    let deps = [...latestDataMetropole]
+    let deps = [...dataByRegionPauvrete]
       .filter(d => !isNaN(Number(d.taux_pauvrete)) && !isNaN(Number(d.densite)))
+      .filter(d => Number(d.densite) >= densiteFilter);
+    
+    // Trier et limiter
+    deps = deps
       .sort((a,b) => {
+        // Si on trie par densité
+        if (sortDensite !== null) {
+          if (sortDensite === 'asc') return Number(a.densite) - Number(b.densite);
+          return Number(b.densite) - Number(a.densite);
+        }
+        // Sinon on trie par pauvreté
         if (sortPauvrete === 'asc') return Number(a.taux_pauvrete) - Number(b.taux_pauvrete);
         return Number(b.taux_pauvrete) - Number(a.taux_pauvrete);
       })
@@ -223,20 +387,42 @@ const PopulationPage = () => {
         }
       ]
     };
-  }, [latestDataMetropole, sortPauvrete]);
+  }, [dataByRegionPauvrete, sortPauvrete, densiteFilter, sortDensite]);
 
-  const barPauvreteDensiteOptions = {
-    maintainAspectRatio: false,
-    plugins: { legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 10 } } },
-    scales: {
-      y: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'Pauvreté (%)' } },
-      y1: { type: 'logarithmic', display: true, position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'Densité (log)' }, ticks: { callback: val => [10, 100, 1000, 10000].includes(val) ? val : '' } }
-    }
-  };
+  const densiteAxisOptions = useMemo(() => ({
+    type: 'logarithmic', 
+    display: true, 
+    position: 'right', 
+    grid: { drawOnChartArea: false }, 
+    title: { display: true, text: 'Densité (log)' },
+    min: 10,
+    max: 30000,
+    grace: '0%',
+    ticks: { callback: val => [10, 100, 1000, 10000].includes(val) ? val : '' } 
+  }), []);
+
+  const barPauvreteDensiteOptions = useMemo(() => {
+    const baseOptions = {
+      maintainAspectRatio: false,
+      plugins: { legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 10 } } },
+      scales: {
+        y: { 
+          type: 'linear', 
+          display: true, 
+          position: 'left', 
+          min: axisRanges.pauvrete.min - 1,
+          max: axisRanges.pauvrete.max + 1,
+          title: { display: true, text: 'Pauvreté (%)' } 
+        },
+        y1: densiteAxisOptions
+      }
+    };
+    return baseOptions;
+  }, [axisRanges]);
 
   // 4A. BAR EMPILÉ : Jeunes vs Seniors
   const barAgesData = useMemo(() => {
-    let deps = latestDataMetropole
+    let deps = dataByRegionAges
       .filter(d => !isNaN(Number(d.pct_moins_20ans)) && !isNaN(Number(d.pct_plus_60ans)))
       .map(d => ({
         nom: d.nom,
@@ -259,64 +445,107 @@ const PopulationPage = () => {
         { label: 'Moins 20 ans', data: sliced.map(d=>d.m20), backgroundColor: '#f472b6' }
       ]
     };
-  }, [latestDataMetropole, sortJeunes]);
+  }, [dataByRegionAges, sortJeunes]);
 
-  const barAgesOptions = {
+  const barAgesOptions = useMemo(() => ({
     maintainAspectRatio: false,
     plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } }, tooltip: { mode: 'index', intersect: false } },
     responsive: true,
     scales: { x: { stacked: true }, y: { stacked: true } }
-  };
+  }), []);
 
-  // 4B. RADAR : Profil socio-économique vs Moyenne Nationale
+  // 4B. RADAR : Profil socio-économique vs Moyenne Nationale/Régionale
   const radarSocioEcoData = useMemo(() => {
-    const calcAvg = (key) => latestDataAll.reduce((sum, d) => sum + (Number(d[key]) || 0), 0) / latestDataAll.filter(d => !isNaN(Number(d[key]))).length;
-    
+    const calcAvg = (field) => {
+      const vals = latestDataAll
+        .map(d => Number(d[field]) || 0)
+        .filter(v => !isNaN(v) && v !== 0);
+      return vals.length > 0 ? vals.reduce((a, b) => a + b) / vals.length : 1;
+    };
+
     const natChomage = calcAvg('taux_chomage');
     const natPauvrete = calcAvg('taux_pauvrete');
     const natJeunes = calcAvg('pct_moins_20ans');
     const natSeniors = calcAvg('pct_plus_60ans');
     const natMigratoire = calcAvg('contribution_solde_migratoire');
     
-    const target = latestDataAll.find(d => String(d.code) === String(selectedRadarDept)) || latestDataAll[0];
+    // Déterminer la référence : régionale si sélectionnée, sinon nationale
+    let refChomage = natChomage;
+    let refPauvrete = natPauvrete;
+    let refJeunes = natJeunes;
+    let refSeniors = natSeniors;
+    let refMigratoire = natMigratoire;
+    let refLabel = 'Moyenne Nationale (Base 100)';
     
-    // Pour éviter une division par zéro si la moyenne est très proche de 0
-    const index = (val, nat) => nat ? (val / nat) * 100 : 100;
+    if (selectedRadarRegion) {
+      const regionalDepts = latestDataAll.filter(d => d.nom_region === selectedRadarRegion);
+      if (regionalDepts.length > 0) {
+        refChomage = regionalDepts.map(d => Number(d.taux_chomage) || 0).reduce((a, b) => a + b, 0) / regionalDepts.length || 1;
+        refPauvrete = regionalDepts.map(d => Number(d.taux_pauvrete) || 0).reduce((a, b) => a + b, 0) / regionalDepts.length || 1;
+        refJeunes = regionalDepts.map(d => Number(d.pct_moins_20ans) || 0).reduce((a, b) => a + b, 0) / regionalDepts.length || 1;
+        refSeniors = regionalDepts.map(d => Number(d.pct_plus_60ans) || 0).reduce((a, b) => a + b, 0) / regionalDepts.length || 1;
+        refMigratoire = regionalDepts.map(d => Number(d.contribution_solde_migratoire) || 0).reduce((a, b) => a + b, 0) / regionalDepts.length || 1;
+        refLabel = `Moyenne de ${selectedRadarRegion} (Base 100)`;
+      }
+    }
 
-    return {
-      labels: [
-        'Chômage (Économie)', 
-        'Pauvreté (Social)', 
-        'Jeunesse (Démographie - Jeunes)', 
-        'Seniors (Démographie - Vieux)', 
-        'Attractivité (Solde Migratoire)'
-      ],
-      datasets: [
-        {
-          label: `Moyenne Nationale (Base 100)`,
-          data: [100, 100, 100, 100, 100],
-          backgroundColor: 'rgba(148, 163, 184, 0.2)',
-          borderColor: '#94a3b8',
-          pointBackgroundColor: '#94a3b8',
+    const index = (val, ref) => ref ? (val / ref) * 100 : 100;
+
+    const labels = [
+      'Chômage (Économie)', 
+      'Pauvreté (Social)', 
+      'Jeunesse (Démographie - Jeunes)', 
+      'Seniors (Démographie - Vieux)',
+      'Attractivité (Solde Migratoire)'
+    ];
+    
+    const datasets = [
+      {
+        label: refLabel,
+        data: [100, 100, 100, 100, 100],
+        backgroundColor: 'transparent',
+        borderColor: '#475569',
+        pointBackgroundColor: '#475569',
+        borderWidth: 3,
+        borderDash: [5, 5],
+        pointRadius: 4,
+        pointBorderColor: '#475569',
+        pointBorderWidth: 2,
+      }
+    ];
+    
+    // Ajouter les départements sélectionnés avec des couleurs différentes
+    const colors = [
+      { bg: 'transparent', border: '#3b82f6', point: '#2563eb' },
+      { bg: 'transparent', border: '#22c55e', point: '#16a34a' },
+      { bg: 'transparent', border: '#f59e0b', point: '#d97706' }
+    ];
+    
+    selectedRadarDepts.forEach((deptCode, idx) => {
+      const target = latestDataAll.find(d => String(d.code) === String(deptCode));
+      if (target) {
+        datasets.push({
+          label: target.nom,
+          data: [
+            index(Number(target.taux_chomage) || 0, refChomage),
+            index(Number(target.taux_pauvrete) || 0, refPauvrete),
+            index(Number(target.pct_moins_20ans) || 0, refJeunes),
+            index(Number(target.pct_plus_60ans) || 0, refSeniors),
+            index(Number(target.contribution_solde_migratoire) || 0, refMigratoire)
+          ],
+          backgroundColor: colors[idx % colors.length].bg,
+          borderColor: colors[idx % colors.length].border,
+          pointBackgroundColor: colors[idx % colors.length].point,
           borderWidth: 2,
-        },
-        {
-          label: target ? target.nom : 'Dép.',
-          data: target ? [
-            index(Number(target.taux_chomage) || 0, natChomage),
-            index(Number(target.taux_pauvrete) || 0, natPauvrete),
-            index(Number(target.pct_moins_20ans) || 0, natJeunes),
-            index(Number(target.pct_plus_60ans) || 0, natSeniors),
-            index(Number(target.contribution_solde_migratoire) || 0, natMigratoire)
-          ] : [0,0,0,0,0],
-          backgroundColor: 'rgba(59, 130, 246, 0.4)',
-          borderColor: '#3b82f6',
-          pointBackgroundColor: '#2563eb',
-          borderWidth: 2,
-        }
-      ]
-    };
-  }, [latestDataAll, selectedRadarDept]);
+          pointRadius: 3,
+          pointBorderColor: colors[idx % colors.length].border,
+          pointBorderWidth: 1,
+        });
+      }
+    });
+    
+    return { labels, datasets };
+  }, [latestDataAll, selectedRadarDepts, selectedRadarRegion]);
 
   const radarOptions = {
     maintainAspectRatio: false,
@@ -338,14 +567,37 @@ const PopulationPage = () => {
         sansGers={sansGers} setSansGers={setSansGers}
         sortJeunes={sortJeunes} setSortJeunes={setSortJeunes}
         sortPauvrete={sortPauvrete} setSortPauvrete={setSortPauvrete}
-        selectedRadarDept={selectedRadarDept} setSelectedRadarDept={setSelectedRadarDept}
-        depsList={latestDataAll.map(d => ({code: d.code, nom: d.nom})).sort((a,b) => a.nom.localeCompare(b.nom))}
+        selectedRadarDepts={selectedRadarDepts} setSelectedRadarDepts={setSelectedRadarDepts}
+        selectedRadarRegion={selectedRadarRegion} setSelectedRadarRegion={setSelectedRadarRegion}
+        showRadarRegionDropdown={showRadarRegionDropdown} setShowRadarRegionDropdown={setShowRadarRegionDropdown}
+        radarSearchTerm={radarSearchTerm} setRadarSearchTerm={setRadarSearchTerm}
+        depsList={latestDataAll.map(d => ({code: d.code, nom: d.nom, nom_region: d.nom_region})).sort((a,b) => a.nom.localeCompare(b.nom))}
+        regionsList={regionsList}
+        selectedRegionBubble={selectedRegionBubble} setSelectedRegionBubble={setSelectedRegionBubble}
+        searchRegionBubble={searchRegionBubble} setSearchRegionBubble={setSearchRegionBubble}
+        showRegionSuggBubble={showRegionSuggBubble} setShowRegionSuggBubble={setShowRegionSuggBubble}
+        regionSuggestionsBubble={regionSuggestionsBubble}
+        selectedRegionNatMig={selectedRegionNatMig} setSelectedRegionNatMig={setSelectedRegionNatMig}
+        searchRegionNatMig={searchRegionNatMig} setSearchRegionNatMig={setSearchRegionNatMig}
+        showRegionSuggNatMig={showRegionSuggNatMig} setShowRegionSuggNatMig={setShowRegionSuggNatMig}
+        regionSuggestionsNatMig={regionSuggestionsNatMig}
+        selectedRegionPauvrete={selectedRegionPauvrete} setSelectedRegionPauvrete={setSelectedRegionPauvrete}
+        searchRegionPauvrete={searchRegionPauvrete} setSearchRegionPauvrete={setSearchRegionPauvrete}
+        showRegionSuggPauvrete={showRegionSuggPauvrete} setShowRegionSuggPauvrete={setShowRegionSuggPauvrete}
+        regionSuggestionsPauvrete={regionSuggestionsPauvrete}
+        selectedRegionAges={selectedRegionAges} setSelectedRegionAges={setSelectedRegionAges}
+        searchRegionAges={searchRegionAges} setSearchRegionAges={setSearchRegionAges}
+        showRegionSuggAges={showRegionSuggAges} setShowRegionSuggAges={setShowRegionSuggAges}
+        regionSuggestionsAges={regionSuggestionsAges}
+        sortNatMig={sortNatMig} setSortNatMig={setSortNatMig}
+        densiteFilter={densiteFilter} setDensiteFilter={setDensiteFilter}
+        sortDensite={sortDensite} setSortDensite={setSortDensite}
       />
 
-      <div className="flex-1 flex flex-col gap-8 xl:p-8 xl:pt-0 pt-[20px] p-4 xl:ml-[20%] ml-0">
+      <div className="flex-1 flex flex-col gap-8 xl:p-8 xl:pt-0 xl:pb-0 pt-[20px] p-4 pb-0 xl:ml-[20%] ml-0">
         
         {/* ROW 1 : BUBBLE CHART */}
-        <div className="w-full bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden relative">
+        <div className="w-full bg-white rounded-xl shadow-sm border border-slate-200 overflow-visible relative">
           <div className="absolute top-3 left-3 px-1 py-1 z-10 text-md font-semibold text-slate-700">
             <h2 className="text-lg font-bold text-slate-800 leading-tight">Chômage, Pauvreté et Parc Social</h2>
             <div className="text-xs font-normal text-slate-500 mt-0.5">Bulles = Part de logements sociaux. Corrélation entre précarité et hébergement social.</div>
@@ -417,6 +669,13 @@ const PopulationPage = () => {
           </div>
         </div>
 
+        {/* CTA - Créer son propre graphique */}
+        <div className="w-full py-1 text-center border-t border-slate-200">
+          <p className="text-slate-600 text-sm mb-1">Vous ne trouvez pas ce que vous cherchez ?</p>
+          <Link to="/test" className="inline-block text-slate-900 font-semibold hover:underline transition-all text-base">
+            Créez votre propre graphique
+          </Link>
+        </div>
       </div>
     </div>
   );

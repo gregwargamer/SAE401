@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Util\GeoNameResolver;
 use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -42,6 +43,15 @@ class AllController extends AbstractController
         ";
 
         $data = $connection->fetchAllAssociative($sql);
+
+        foreach ($data as &$row) {
+            $depCode = (string) ($row['code_departement'] ?? '');
+            $regionCode = (string) ($row['code_region'] ?? '');
+
+            $row['nom_departement'] = GeoNameResolver::departmentName($depCode, $row['nom_departement'] ?? null);
+            $row['nom_region'] = GeoNameResolver::regionName($regionCode, $row['nom_region'] ?? null);
+        }
+
         return $this->json($data);
     }
 

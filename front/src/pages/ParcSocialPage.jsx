@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { apiClient, fetchGeoData } from "../service/mainapi";
 import {
   Chart as ChartJS, CategoryScale, LinearScale, LogarithmicScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend
@@ -388,7 +389,7 @@ const ParcSocialPage = () => {
         loyerRegionFilter={loyerRegionFilter}
         setLoyerRegionFilter={setLoyerRegionFilter}
       />
-      <div className="flex-1 ml-0 xl:ml-[20%] flex flex-col gap-8 p-6 xl:p-8 xl:pt-0">
+      <div className="flex-1 ml-0 xl:ml-[20%] flex flex-col gap-8 p-6 xl:p-8 xl:pt-0 xl:pb-0 pb-0">
         {/* ROW 1 : CHOROPLETH MAP */}
         <div className="w-full bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden relative" onMouseMove={handleMouseMove}>
           <div className="absolute top-3 left-3 z-10">
@@ -550,6 +551,13 @@ const ParcSocialPage = () => {
            </div>
         </div>
 
+        {/* CTA - Créer son propre graphique */}
+        <div className="w-full py-1 text-center border-t border-slate-200">
+          <p className="text-slate-600 text-sm mb-1">Vous ne trouvez pas ce que vous cherchez ?</p>
+          <Link to="/test" className="inline-block text-slate-900 font-semibold hover:underline transition-all text-base">
+            Créez votre propre graphique
+          </Link>
+        </div>
       </div>
     </div>
   );

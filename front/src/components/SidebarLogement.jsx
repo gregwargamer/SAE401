@@ -109,18 +109,18 @@ const SidebarLogement = ({
           </div>
 
           {/* Poverty Slider */}
-          <div className="flex items-center justify-between">
-            <label className="text-xs font-semibold text-slate-600">Pauvreté {`>`}</label>
-            <span className="text-xs font-bold text-amber-600 bg-amber-50 px-1.5 py-0 rounded">{povertyThreshold}%</span>
+          <div className="flex items-center gap-2">
+            <label className="text-xs font-semibold text-slate-600 w-16">Pauvreté {`>`}</label>
+            <input 
+              type="range"
+              min="0"
+              max="30"
+              value={povertyThreshold}
+              onChange={(e) => setPovertyThreshold(Number(e.target.value))}
+              className="flex-1 h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-amber-500"
+            />
+            <span className="text-xs font-bold text-amber-600 bg-amber-50 px-1.5 py-0 rounded w-10 text-center">{povertyThreshold}%</span>
           </div>
-          <input 
-            type="range"
-            min="0"
-            max="30"
-            value={povertyThreshold}
-            onChange={(e) => setPovertyThreshold(Number(e.target.value))}
-            className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-amber-500"
-          />
         </div>
 
         {/* ROW 2 - Palmarès */}
@@ -202,18 +202,18 @@ const SidebarLogement = ({
           </div>
 
           {/* Seuil Logements Sociaux */}
-          <div className="flex items-center justify-between">
-            <label className="text-xs font-semibold text-slate-600">Seuil {`>`}</label>
-            <span className="text-xs font-bold text-red-600 bg-red-50 px-1.5 py-0 rounded">{socialHousingThreshold}%</span>
+          <div className="flex items-center gap-2">
+            <label className="text-xs font-semibold text-slate-600 w-10">Seuil {`>`}</label>
+            <input
+              type="range"
+              min="0"
+              max="40"
+              value={socialHousingThreshold}
+              onChange={(e) => setSocialHousingThreshold(Number(e.target.value))}
+              className="flex-1 h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-red-500"
+            />
+            <span className="text-xs font-bold text-red-600 bg-red-50 px-1.5 py-0 rounded w-10 text-center">{socialHousingThreshold}%</span>
           </div>
-          <input
-            type="range"
-            min="0"
-            max="40"
-            value={socialHousingThreshold}
-            onChange={(e) => setSocialHousingThreshold(Number(e.target.value))}
-            className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-red-500"
-          />
         </div>
 
         {/* ROW 3 */}
@@ -328,19 +328,19 @@ const SidebarLogement = ({
             </button>
             
             {/* Max Density Slider */}
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-slate-600">Max densité</label>
-              <span className="text-xs font-bold text-blue-600 bg-blue-50 px-1.5 py-0 rounded">{maxDensity}</span>
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-semibold text-slate-600 w-20">Max densité</label>
+              <input
+                type="range"
+                min="100"
+                max="21000"
+                step="100"
+                value={maxDensity}
+                onChange={(e) => setMaxDensity(Number(e.target.value))}
+                className="flex-1 h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
+              />
+              <span className="text-xs font-bold text-blue-600 bg-blue-50 px-1.5 py-0 rounded w-11 text-center">{maxDensity}</span>
             </div>
-            <input
-              type="range"
-              min="100"
-              max="21000"
-              step="100"
-              value={maxDensity}
-              onChange={(e) => setMaxDensity(Number(e.target.value))}
-              className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
-            />
           </div>
         </div>
 

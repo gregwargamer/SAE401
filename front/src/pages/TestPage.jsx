@@ -149,7 +149,7 @@ const TestPage = () => {
         years={years}
       />
 
-      <div className="flex-1 w-full lg:ml-[240px] xl:ml-[20%] flex flex-col gap-6 p-4 lg:p-8 lg:pt-6 pb-10">
+      <div className="flex-1 w-full lg:ml-[240px] xl:ml-[20%] flex flex-col gap-6 p-4 lg:p-8 lg:pt-2 pb-0">
 
         {/* Header */}
         <div>

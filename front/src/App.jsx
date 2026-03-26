@@ -21,8 +21,8 @@ function App() {
   const lienNav = ({ isActive }) =>
     `py-1 font-medium transition-all duration-200 text-xs sm:text-sm xl:text-base pb-1 ${
       isActive
-        ? "text-[#1f2a2e] font-bold border-b-2 border-[#1f2a2e]"
-        : "text-[#4a5256] border-b-2 border-transparent hover:text-[#1f2a2e] hover:border-[#1f2a2e]"
+        ? "text-[#1f2a2e] border-b-2 border-[#1f2a2e]"
+        : "text-[#4a5256] border-b-2 border-transparent hover:text-[#1f2a2e]"
     }`;
 
   const lienNavMobile = ({ isActive }) =>
