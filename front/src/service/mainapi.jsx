@@ -1,6 +1,7 @@
 const CACHE_KEY = "fulldb";
 const GEO_CACHE_KEY = "geodata";
-const STATIC_DATA_URL = "/data/static-db.json";
+const STATIC_DATA_URL = "/data/static-data.json";
+const STATIC_GEO_URL = "/data/static-geo.json";
 
 const safeParse = (value) => {
     try {
@@ -35,14 +36,33 @@ const initializeLocalData = async () => {
         return { all: allCached, geo: geoCached };
     }
 
-    const response = await fetch(STATIC_DATA_URL, { cache: "no-store" });
-    if (!response.ok) {
-        throw new Error("Impossible de charger les donnees statiques");
+    // Try to fetch the split files: data and geo. Fall back to single file if needed.
+    let all = [];
+    let geo = [];
+
+    // fetch data (generatedAt + all)
+    const dataResponse = await fetch(STATIC_DATA_URL, { cache: "no-store" });
+    if (dataResponse.ok) {
+        const dataPayload = await dataResponse.json();
+        all = Array.isArray(dataPayload?.all) ? dataPayload.all : [];
     }
 
-    const payload = await response.json();
-    const all = Array.isArray(payload?.all) ? payload.all : [];
-    const geo = Array.isArray(payload?.geo) ? payload.geo : [];
+    // fetch geo (geo array)
+    const geoResponse = await fetch(STATIC_GEO_URL, { cache: "no-store" });
+    if (geoResponse.ok) {
+        const geoPayload = await geoResponse.json();
+        geo = Array.isArray(geoPayload?.geo) ? geoPayload.geo : [];
+    }
+
+    // If either fetch failed, attempt to fetch the original combined file as a fallback
+    if ((!all.length || !geo.length) && dataResponse?.ok === false) {
+        const fallback = await fetch("/data/static-db.json", { cache: "no-store" });
+        if (fallback.ok) {
+            const payload = await fallback.json();
+            all = Array.isArray(payload?.all) ? payload.all : all;
+            geo = Array.isArray(payload?.geo) ? payload.geo : geo;
+        }
+    }
 
     sendToCache(all);
     sendGeoToCache(geo);

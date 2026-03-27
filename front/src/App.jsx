@@ -11,6 +11,7 @@ import HomePage from "./pages/HomePage";
 import LogementPage from "./pages/LogementPage";
 import ParcSocialPage from "./pages/ParcSocialPage";
 import PopulationPage from "./pages/PopulationPage";
+import CreationPage from "./pages/Creation";
 import { initializeLocalData } from "./service/mainapi";
 
 function App() {
@@ -58,8 +59,11 @@ function App() {
             <NavLink to="/population" className={lienNav}>
               Population
             </NavLink>
+            <NavLink to="/creation" className={lienNav}>
+              Créer mon graphique
+            </NavLink>
             <NavLink to="/comparateur" className={lienNav}>
-              Créer vos comparaisons
+              Créer mes comparaisons
             </NavLink>
           </nav>
         </header>
@@ -125,10 +129,18 @@ function App() {
               Population
             </NavLink>
             <NavLink
+              to="/creation"
+              onClick={() => setMenuMobileOuvert(false)}
+              className={`${lienNavMobile({ isActive: location.pathname === "/creation" })} mobile-menu-item`}
+              style={{ animationDelay: "180ms" }}
+            >
+              Créer votre graphique
+            </NavLink>
+            <NavLink
               to="/comparateur"
               onClick={() => setMenuMobileOuvert(false)}
               className={`${lienNavMobile({ isActive: location.pathname === "/comparateur" })} mobile-menu-item`}
-              style={{ animationDelay: "180ms" }}
+              style={{ animationDelay: "220ms" }}
             >
               Créer vos comparaisons
             </NavLink>
@@ -143,6 +155,7 @@ function App() {
           <Route path="/logement" element={<LogementPage />} />
           <Route path="/population" element={<PopulationPage />} />
           <Route path="/comparateur" element={<ComparateurPage />} />
+          <Route path="/creation" element={<CreationPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

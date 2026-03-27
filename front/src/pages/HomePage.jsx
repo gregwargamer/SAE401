@@ -48,7 +48,7 @@ const HomePage = () => {
 
           <div className="home-hero-enter" style={{ animationDelay: "190ms" }}>
             <Link
-              to="/test"
+              to="/creation"
               className="inline-flex items-center justify-center px-6 sm:px-8 py-2 sm:py-3 rounded border-2 border-white bg-white text-slate-900 font-semibold hover:bg-slate-100 transition-colors duration-200 text-sm sm:text-base"
             >
               Créer mon propre graphique

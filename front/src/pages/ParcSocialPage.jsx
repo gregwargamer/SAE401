@@ -562,7 +562,7 @@ const ParcSocialPage = () => {
         {/* CTA - Créer son propre graphique */}
         <div className="w-full py-1 text-center border-t border-slate-200">
           <p className="text-slate-600 text-sm mb-1">Vous ne trouvez pas ce que vous cherchez ?</p>
-          <Link to="/test" className="inline-block text-slate-900 font-semibold hover:underline transition-all text-base">
+          <Link to="/creation" className="inline-block text-slate-900 font-semibold hover:underline transition-all text-base">
             Créez votre propre graphique
           </Link>
         </div>
