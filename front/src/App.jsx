@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   NavLink,
   Navigate,
@@ -11,12 +11,18 @@ import HomePage from "./pages/HomePage";
 import LogementPage from "./pages/LogementPage";
 import ParcSocialPage from "./pages/ParcSocialPage";
 import PopulationPage from "./pages/PopulationPage";
-import TestPage from "./pages/TestPage";
+import { initializeLocalData } from "./service/mainapi";
 
 function App() {
   const [menuMobileOuvert, setMenuMobileOuvert] = useState(false);
   const location = useLocation();
   const estAccueil = location.pathname === "/";
+
+  useEffect(() => {
+    initializeLocalData().catch((err) => {
+      console.error("Erreur initialisation donnees locales:", err);
+    });
+  }, []);
 
   const lienNav = ({ isActive }) =>
     `py-1 font-medium transition-all duration-200 text-xs sm:text-sm xl:text-base pb-1 ${
@@ -51,9 +57,6 @@ function App() {
             </NavLink>
             <NavLink to="/population" className={lienNav}>
               Population
-            </NavLink>
-            <NavLink to="/test" className={lienNav}>
-              Création
             </NavLink>
             <NavLink to="/comparateur" className={lienNav}>
               Créer vos comparaisons
@@ -122,18 +125,10 @@ function App() {
               Population
             </NavLink>
             <NavLink
-              to="/test"
-              onClick={() => setMenuMobileOuvert(false)}
-              className={`${lienNavMobile({ isActive: location.pathname === "/test" })} mobile-menu-item`}
-              style={{ animationDelay: "180ms" }}
-            >
-              Test (Brouillon)
-            </NavLink>
-            <NavLink
               to="/comparateur"
               onClick={() => setMenuMobileOuvert(false)}
               className={`${lienNavMobile({ isActive: location.pathname === "/comparateur" })} mobile-menu-item`}
-              style={{ animationDelay: "220ms" }}
+              style={{ animationDelay: "180ms" }}
             >
               Créer vos comparaisons
             </NavLink>
@@ -144,7 +139,6 @@ function App() {
       <main className={`flex-1 w-full h-full ${estAccueil ? "pb-0" : "pb-8"}`}>
         <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route path="/test" element={<TestPage />} />
           <Route path="/parc-social" element={<ParcSocialPage />} />
           <Route path="/logement" element={<LogementPage />} />
           <Route path="/population" element={<PopulationPage />} />
