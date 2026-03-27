@@ -37,6 +37,14 @@ const ParcSocialPage = () => {
   const [minBubbleSize, setMinBubbleSize] = useState(0);
   const [loyerRegionFilter, setLoyerRegionFilter] = useState('all'); // 'all', 'metropole', 'outremer'
 
+  const normalizeCode = (c) => {
+    if (c === undefined || c === null) return "";
+    const s = String(c);
+    if (s === "2A" || s === "2B") return s;
+    if (s.startsWith("97") || s.startsWith("98")) return s;
+    return String(Number.isNaN(Number(s)) ? s : String(Number(s)).padStart(2, "0"));
+  };
+
   useEffect(() => {
     const load = async () => {
       const [stats, geoResult] = await Promise.all([
@@ -86,11 +94,11 @@ const ParcSocialPage = () => {
     if (minVac === Infinity) { minVac = 0; maxVac = 1; }
 
     // We only take Metropole for the map to keep zoom focused, sans Corse
-    const topoFeatures = geoData.filter(g => isMetropole(g.code) && g.code !== "2A" && g.code !== "2B").map(g => {
+    const topoFeatures = geoData.filter(g => isMetropole(g.code) && normalizeCode(g.code) !== "2A" && normalizeCode(g.code) !== "2B").map(g => {
       let parsed = null;
       try { parsed = JSON.parse(g.geom); } catch(e){}
       
-      const stat = latestDataAll.find(s => s.code === g.code);
+      const stat = latestDataAll.find(s => normalizeCode(s.code) === normalizeCode(g.code));
       
       let score = null;
       if (stat) {

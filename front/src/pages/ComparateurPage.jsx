@@ -53,6 +53,14 @@ const ComparateurPage = () => {
   const [geoData, setGeoData] = useState([]);
   const [dep1Code, setDep1Code] = useState(null);
   const [dep2Code, setDep2Code] = useState(null);
+
+  const normalizeCode = (c) => {
+    if (c === undefined || c === null) return "";
+    const s = String(c);
+    if (s === "2A" || s === "2B") return s;
+    if (s.startsWith("97") || s.startsWith("98")) return s;
+    return String(Number.isNaN(Number(s)) ? s : String(Number(s)).padStart(2, "0"));
+  };
   const [selectedYear, setSelectedYear] = useState("all");
   const [searchDep1, setSearchDep1] = useState("");
   const [searchDep2, setSearchDep2] = useState("");
@@ -116,7 +124,7 @@ const ComparateurPage = () => {
       let geometry;
       try { geometry = typeof g.geom === "string" ? JSON.parse(g.geom) : g.geom; } catch { return null; }
       if (!geometry) return null;
-      const stats = latestData.find((s) => s.code === g.code) || {};
+      const stats = latestData.find((s) => normalizeCode(s.code) === normalizeCode(g.code)) || {};
       return {
         type: "Feature",
         geometry: geometry.type === "Feature" ? geometry.geometry : geometry,
@@ -127,17 +135,17 @@ const ComparateurPage = () => {
 
   /* logique de sélection sur la carte : alterne dep1/dep2, re-clic désélectionne */
   const handleMapSelect = (code) => {
-    const c = String(code);
-    if (c === String(dep1Code)) { setDep1Code(null); return; }
-    if (c === String(dep2Code)) { setDep2Code(null); return; }
+    const c = normalizeCode(code);
+    if (c === normalizeCode(dep1Code)) { setDep1Code(null); return; }
+    if (c === normalizeCode(dep2Code)) { setDep2Code(null); return; }
     if (!dep1Code) { setDep1Code(c); }
     else if (!dep2Code) { setDep2Code(c); }
     else { setDep1Code(c); }
   };
 
   /* stats des deux départements choisis */
-  const d1 = useMemo(() => latestData.find((d) => String(d.code) === String(dep1Code)) || null, [latestData, dep1Code]);
-  const d2 = useMemo(() => latestData.find((d) => String(d.code) === String(dep2Code)) || null, [latestData, dep2Code]);
+  const d1 = useMemo(() => latestData.find((d) => normalizeCode(d.code) === normalizeCode(dep1Code)) || null, [latestData, dep1Code]);
+  const d2 = useMemo(() => latestData.find((d) => normalizeCode(d.code) === normalizeCode(dep2Code)) || null, [latestData, dep2Code]);
   const nom1 = d1?.nom || "Département 1";
   const nom2 = d2?.nom || "Département 2";
 

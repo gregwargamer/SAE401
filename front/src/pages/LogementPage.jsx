@@ -67,7 +67,15 @@ const LogementPage = () => {
       try { geometry = typeof g.geom === "string" ? JSON.parse(g.geom) : g.geom; } catch { return null; }
       if (!geometry) return null;
 
-      const sesChiffres = latestData.find(s => s.code === g.code) || {};
+      const normalizeCode = (c) => {
+        if (c === undefined || c === null) return "";
+        const s = String(c);
+        if (s === "2A" || s === "2B") return s;
+        if (s.startsWith("97") || s.startsWith("98")) return s;
+        return String(Number.isNaN(Number(s)) ? s : String(Number(s)).padStart(2, "0"));
+      };
+
+      const sesChiffres = latestData.find(s => normalizeCode(s.code) === normalizeCode(g.code)) || {};
 
       // Appliquer le filtre de pauvreté
       if (sesChiffres.taux_pauvrete && Number(sesChiffres.taux_pauvrete) < povertyThreshold) {
