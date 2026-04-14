@@ -1,17 +1,20 @@
-# environnement
 # dependances
 node_modules/
-front/node_modules/
+
+# build
+dist/
+dist-ssr/
 
 # logs
+logs
 *.log
 npm-debug.log*
 yarn-debug.log*
+yarn-error.log*
 pnpm-debug.log*
+lerna-debug.log*
 
-# build parce que prend de la place pur rien
-front/dist/
-front/dist-ssr/
+*.local
 
 # pitié ne reviens jamais toi
 .DS_Store
@@ -19,6 +22,12 @@ front/dist-ssr/
 # ide
 .vscode/*
 !.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 
-gregrun.sh
-front/vite.config.js
+.cursor/
+.postman/
