@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { apiClient } from "../service/mainapi";
+import { getAll } from "../service/regiondepartement";
 import {
   Chart as ChartJS, CategoryScale, LinearScale, LogarithmicScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend, RadialLinearScale, Filler
 } from "chart.js";
@@ -43,8 +43,8 @@ const PopulationPage = () => {
 
   useEffect(() => {
     const load = async () => {
-      const stats = await apiClient.get("/all");
-      setRawData(stats.data || []);
+      const stats = await getAll();
+      setRawData(stats || []);
     };
     load();
   }, []);

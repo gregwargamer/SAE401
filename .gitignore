@@ -1,12 +1,6 @@
 # environnement
-back/.env
-back/.env.local
-back/.env.dev
-#oui je met des .env parce que giga flemme
-
 # dependances
 node_modules/
-back/vendor/
 front/node_modules/
 
 # logs
@@ -18,11 +12,6 @@ pnpm-debug.log*
 # build parce que prend de la place pur rien
 front/dist/
 front/dist-ssr/
-back/public/bundles/
-
-# symfony pas utile
-back/var/
-back/config/secrets/prod/prod.decrypt.private.php
 
 # pitié ne reviens jamais toi
 .DS_Store
@@ -30,10 +19,6 @@ back/config/secrets/prod/prod.decrypt.private.php
 # ide
 .vscode/*
 !.vscode/extensions.json
-
-# migrations
-back/migrations/*.php
-!back/migrations/.gitignore
 
 gregrun.sh
 front/vite.config.js

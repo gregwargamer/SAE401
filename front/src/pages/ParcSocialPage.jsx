@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { apiClient, fetchGeoData } from "../service/mainapi";
+import { fetchGeoData } from "../service/mainapi";
+import { getAll } from "../service/regiondepartement";
 import {
   Chart as ChartJS, CategoryScale, LinearScale, LogarithmicScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend
 } from "chart.js";
@@ -39,11 +40,8 @@ const ParcSocialPage = () => {
 
   useEffect(() => {
     const load = async () => {
-      const [stats, geoResult] = await Promise.all([
-        apiClient.get("/all"),
-        fetchGeoData()
-      ]);
-      setRawData(stats.data || []);
+      const [stats, geoResult] = await Promise.all([getAll(), fetchGeoData()]);
+      setRawData(stats || []);
       setGeoData(geoResult);
     };
     load();

@@ -4,25 +4,14 @@ Application web de visualisation de statistiques départementales françaises.
 
 ## Stack technique
 
-- **Backend** : Symfony (API REST) — dossier `back/`
 - **Frontend** : React + Vite + Tailwind CSS + Chart.js — dossier `front/`
-- **Base de données** : MySQL (hébergée sur AlwaysData)
+- **Données** : JSON statique servi depuis `front/public/data/fulldb.json` (plus d’API dédiée dans ce dépôt)
 
-## Prérequis pour lancer le projet
+## Prérequis
 
-Symfony CLI doit être installé — [symfony.com/doc/current/setup.html](https://symfony.com/doc/current/setup.html)
+Node.js — [nodejs.org](https://nodejs.org/en/download)
 
-Node.js doit être installé — [nodejs.org](https://nodejs.org/en/download)
-
-### Backend (Symfony)
-
-```bash
-cd back
-composer install
-symfony server:start
-```
-
-### puis lancement du frontend (React)
+## Lancer le projet
 
 ```bash
 cd front
@@ -30,28 +19,23 @@ npm install --legacy-peer-deps
 npm run dev
 ```
 
-### Ou lancement en une commande
+Build de production :
 
 ```bash
-(cd front && npm install --legacy-peer-deps && npm run dev) & (cd back && composer install && php -S 127.0.0.1:8000 -t public/)
+cd front
+npm run build
 ```
+
+Les assets générés sont dans `front/dist/` ; le fichier `fulldb.json` est copié dans `dist/data/` au build.
 
 ## Données
 
-Les fichiers de données brutes (CSV source, dump SQL) sont dans le dossier `data/`.
-
-Pour importer les statistiques en base :
-
-```bash
-cd back
-php bin/console app:import:stats-departement ../data/logements-et-logements-sociaux-dans-les-departements.csv
-```
+Les fichiers de données brutes (CSV source, dump SQL) restent dans le dossier `data/` à titre d’archive. L’application utilise le bundle `front/public/data/fulldb.json` pour les écrans.
 
 ## Structure
 
 ```
 SAE401/
 ├── data/          ← données brutes (CSV, SQL)
-├── back/          ← API Symfony
-└── front/         ← application React
+└── front/         ← application React + json statique
 ```

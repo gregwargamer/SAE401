@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { apiClient } from "../service/mainapi";
+import { fetchGeoData } from "../service/mainapi";
+import { getAll } from "../service/regiondepartement";
 import {
   Chart as ChartJS, CategoryScale, LinearScale, LogarithmicScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend
 } from "chart.js";
@@ -45,9 +46,9 @@ const LogementPage = () => {
 
   useEffect(() => {
     const load = async () => {
-      const [geo, stats] = await Promise.all([apiClient.get("/geo"), apiClient.get("/all")]);
-      setGeoData(geo.data || []);
-      setRawData(stats.data || []);
+      const [geo, stats] = await Promise.all([fetchGeoData(), getAll()]);
+      setGeoData(geo || []);
+      setRawData(stats || []);
     };
     load();
   }, []);

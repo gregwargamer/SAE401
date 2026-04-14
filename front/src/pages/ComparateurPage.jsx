@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { apiClient } from "../service/mainapi";
+import { fetchGeoData } from "../service/mainapi";
+import { getAll } from "../service/regiondepartement";
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend } from "chart.js";
 import { Bar, Pie } from "react-chartjs-2";
 import MapComparateur from "../components/MapComparateur";
@@ -62,12 +63,9 @@ const ComparateurPage = () => {
   useEffect(() => {
     const load = async () => {
       /* charge en parallèle les géométries et les stats */
-      const [geo, stats] = await Promise.all([
-        apiClient.get("/geo"),
-        apiClient.get("/all"),
-      ]);
-      setGeoData(geo.data || []);
-      setRawData(stats.data || []);
+      const [geo, stats] = await Promise.all([fetchGeoData(), getAll()]);
+      setGeoData(geo || []);
+      setRawData(stats || []);
     };
     load();
   }, []);
