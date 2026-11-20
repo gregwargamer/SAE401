@@ -1,0 +1,8 @@
+services:
+  front:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "443:443"
+    restart: unless-stopped
